@@ -6,7 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
@@ -81,7 +81,7 @@ def prepare_prediction_data(noc, season):
     
     return prediction_data
 
-# Function to train Random Forest model
+# Function to train Decision Tree model
 def train_prediction_model(data):
     # Prepare features
     X = data[['Year', 'Athlete_Count', 'Previous_Medals', 'Host_Status']].values
@@ -95,9 +95,8 @@ def train_prediction_model(data):
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
     
-    # Train Random Forest model
-    model = RandomForestRegressor(
-        n_estimators=100,
+    # Train Decision Tree model
+    model = DecisionTreeRegressor(
         max_depth=10,
         min_samples_split=2,
         min_samples_leaf=1,
@@ -288,7 +287,7 @@ def update_predictions(selected_noc, selected_season):
         feature_importance,
         x='Feature',
         y='Importance',
-        title='Feature Importance in Prediction Model',
+        title='Feature Importance in Decision Tree Model',
         color='Importance',
         color_continuous_scale='Viridis'
     )
@@ -321,7 +320,7 @@ def update_predictions(selected_noc, selected_season):
                 html.P(f"Last known medal count: {prediction_data['Medal_Count'].iloc[-1]}"),
                 html.P(f"Last known athlete count: {last_athlete_count}"),
                 html.Hr(),
-                html.H5("Model Performance:"),
+                html.H5("Decision Tree Model Performance:"),
                 html.P(f"RMSE: {rmse:.2f}"),
                 html.P(f"R² Score: {r2:.2f}"),
                 html.Hr(),

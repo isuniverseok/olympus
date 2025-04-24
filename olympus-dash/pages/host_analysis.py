@@ -136,18 +136,14 @@ def update_host_analysis(selected_noc):
         # Create medal comparison figure
         medal_fig = go.Figure()
         
-        # Add host year data
-        medal_fig.add_trace(go.Bar(
-            name='Host Year',
-            x=['Gold', 'Silver', 'Bronze'],
-            y=[year_data['Host_Medals'].get('Gold', 0),
-               year_data['Host_Medals'].get('Silver', 0),
-               year_data['Host_Medals'].get('Bronze', 0)],
-            marker_color=['gold', 'silver', '#cd7f32']
-        ))
+        # Calculate relevant years for hover text
+        host_display_year = year
+        prev_display_year = year - 4 if year > 1896 else None
+        next_display_year = year + 4 if year < 2020 else None
         
-        # Add previous games data
-        if year > 1896:
+        # --- Reordered & Adjusted Opacity/Pattern --- 
+        # Add previous games data first
+        if prev_display_year:
             medal_fig.add_trace(go.Bar(
                 name='Previous Games',
                 x=['Gold', 'Silver', 'Bronze'],
@@ -155,11 +151,30 @@ def update_host_analysis(selected_noc):
                    year_data['Prev_Medals'].get('Silver', 0),
                    year_data['Prev_Medals'].get('Bronze', 0)],
                 marker_color=['gold', 'silver', '#cd7f32'],
-                opacity=0.7
+                opacity=0.7, # Slightly increased opacity
+                marker_pattern_shape="/", # Added pattern
+                customdata=[prev_display_year] * 3, # Pass year to hovertemplate
+                hovertemplate=f"<b>Previous Games ({prev_display_year})</b><br>" +
+                              "Medal: %{x}<br>" +
+                              "Count: %{y}<extra></extra>"
             ))
         
-        # Add next games data
-        if year < 2020:
+        # Add host year data second (solid)
+        medal_fig.add_trace(go.Bar(
+            name='Host Year',
+            x=['Gold', 'Silver', 'Bronze'],
+            y=[year_data['Host_Medals'].get('Gold', 0),
+               year_data['Host_Medals'].get('Silver', 0),
+               year_data['Host_Medals'].get('Bronze', 0)],
+            marker_color=['gold', 'silver', '#cd7f32'], # Solid color
+            customdata=[host_display_year] * 3,
+            hovertemplate=f"<b>Host Year ({host_display_year})</b><br>" +
+                          "Medal: %{x}<br>" +
+                          "Count: %{y}<extra></extra>"
+        ))
+
+        # Add next games data third
+        if next_display_year:
             medal_fig.add_trace(go.Bar(
                 name='Next Games',
                 x=['Gold', 'Silver', 'Bronze'],
@@ -167,8 +182,14 @@ def update_host_analysis(selected_noc):
                    year_data['Next_Medals'].get('Silver', 0),
                    year_data['Next_Medals'].get('Bronze', 0)],
                 marker_color=['gold', 'silver', '#cd7f32'],
-                opacity=0.7
+                opacity=0.7, # Slightly increased opacity
+                marker_pattern_shape=".", # Changed pattern to dots
+                customdata=[next_display_year] * 3,
+                hovertemplate=f"<b>Next Games ({next_display_year})</b><br>" +
+                              "Medal: %{x}<br>" +
+                              "Count: %{y}<extra></extra>"
             ))
+        # --- End Reorder & Adjustment ---
         
         medal_fig.update_layout(
             title=f"Medal Comparison for {selected_noc} at {city} {year}",
@@ -181,40 +202,54 @@ def update_host_analysis(selected_noc):
         # Create athlete participation figure
         athlete_fig = go.Figure()
         
-        # Add host year data
-        athlete_fig.add_trace(go.Bar(
-            name='Host Year',
-            x=['Athletes'],
-            y=[year_data['Host_Athletes']],
-            marker_color='royalblue'
-        ))
-        
-        # Add previous games data
-        if year > 1896:
+        # --- Reordered & Adjusted Opacity/Pattern --- 
+        # Add previous games data first
+        if prev_display_year:
             athlete_fig.add_trace(go.Bar(
                 name='Previous Games',
                 x=['Athletes'],
                 y=[year_data['Prev_Athletes']],
                 marker_color='royalblue',
-                opacity=0.7
+                opacity=0.7,
+                marker_pattern_shape="/",
+                customdata=[prev_display_year],
+                hovertemplate=f"<b>Previous Games ({prev_display_year})</b><br>" +
+                              "Athletes: %{y}<extra></extra>"
             ))
         
-        # Add next games data
-        if year < 2020:
+        # Add host year data second (solid)
+        athlete_fig.add_trace(go.Bar(
+            name='Host Year',
+            x=['Athletes'],
+            y=[year_data['Host_Athletes']],
+            marker_color='royalblue',
+            customdata=[host_display_year],
+            hovertemplate=f"<b>Host Year ({host_display_year})</b><br>" +
+                          "Athletes: %{y}<extra></extra>"
+        ))
+        
+        # Add next games data third
+        if next_display_year:
             athlete_fig.add_trace(go.Bar(
                 name='Next Games',
                 x=['Athletes'],
                 y=[year_data['Next_Athletes']],
                 marker_color='royalblue',
-                opacity=0.7
+                opacity=0.7,
+                marker_pattern_shape=".",
+                customdata=[next_display_year],
+                hovertemplate=f"<b>Next Games ({next_display_year})</b><br>" +
+                              "Athletes: %{y}<extra></extra>"
             ))
+        # --- End Reorder & Adjustment ---
         
         athlete_fig.update_layout(
             title=f"Athlete Participation for {selected_noc} at {city} {year}",
             barmode='group',
             xaxis_title='',
             yaxis_title='Number of Athletes',
-            showlegend=True
+            showlegend=True,
+            xaxis_showticklabels=False # Hide 'Athletes' label on x-axis
         )
         
         visualizations.extend([
