@@ -1,21 +1,280 @@
 # pages/host_analysis.py
 import dash
-from dash import html, dcc
+from dash import html, dcc, callback, Input, Output
 import dash_bootstrap_components as dbc
-from data_loader import df, FILTER_OPTIONS, create_dropdown_options
+import plotly.express as px
+import plotly.graph_objects as go
+import pandas as pd
+from data_loader import df, NOC_OPTIONS_NO_ALL, get_default_value
 
 dash.register_page(__name__, name='Host Analysis')
 
+# Host cities and their NOCs
+HOST_CITIES = {
+    1896: ('Athens', 'GRE'),
+    1900: ('Paris', 'FRA'),
+    1904: ('St. Louis', 'USA'),
+    1908: ('London', 'GBR'),
+    1912: ('Stockholm', 'SWE'),
+    1920: ('Antwerp', 'BEL'),
+    1924: ('Paris', 'FRA'),
+    1928: ('Amsterdam', 'NED'),
+    1932: ('Los Angeles', 'USA'),
+    1936: ('Berlin', 'GER'),
+    1948: ('London', 'GBR'),
+    1952: ('Helsinki', 'FIN'),
+    1956: ('Melbourne', 'AUS'),
+    1960: ('Rome', 'ITA'),
+    1964: ('Tokyo', 'JPN'),
+    1968: ('Mexico City', 'MEX'),
+    1972: ('Munich', 'GER'),
+    1976: ('Montreal', 'CAN'),
+    1980: ('Moscow', 'RUS'),
+    1984: ('Los Angeles', 'USA'),
+    1988: ('Seoul', 'KOR'),
+    1992: ('Barcelona', 'ESP'),
+    1996: ('Atlanta', 'USA'),
+    2000: ('Sydney', 'AUS'),
+    2004: ('Athens', 'GRE'),
+    2008: ('Beijing', 'CHN'),
+    2012: ('London', 'GBR'),
+    2016: ('Rio de Janeiro', 'BRA'),
+    2020: ('Tokyo', 'JPN')
+}
+
+# Function to get host country data
+def get_host_data():
+    host_data = []
+    for year, (city, noc) in HOST_CITIES.items():
+        # Get host year data
+        host_year = df[df['Year'] == year]
+        host_medals = host_year[host_year['NOC'] == noc]['Medal'].value_counts()
+        host_athletes = len(host_year[host_year['NOC'] == noc]['Name'].unique())
+        
+        # Get previous games data (if available)
+        prev_year = year - 4 if year > 1896 else None
+        prev_medals = None
+        prev_athletes = None
+        if prev_year:
+            prev_year_data = df[df['Year'] == prev_year]
+            prev_medals = prev_year_data[prev_year_data['NOC'] == noc]['Medal'].value_counts()
+            prev_athletes = len(prev_year_data[prev_year_data['NOC'] == noc]['Name'].unique())
+        
+        # Get next games data (if available)
+        next_year = year + 4 if year < 2020 else None
+        next_medals = None
+        next_athletes = None
+        if next_year:
+            next_year_data = df[df['Year'] == next_year]
+            next_medals = next_year_data[next_year_data['NOC'] == noc]['Medal'].value_counts()
+            next_athletes = len(next_year_data[next_year_data['NOC'] == noc]['Name'].unique())
+        
+        host_data.append({
+            'Year': year,
+            'City': city,
+            'NOC': noc,
+            'Host_Medals': host_medals.to_dict() if not host_medals.empty else {'Gold': 0, 'Silver': 0, 'Bronze': 0},
+            'Host_Athletes': host_athletes,
+            'Prev_Medals': prev_medals.to_dict() if prev_medals is not None and not prev_medals.empty else {'Gold': 0, 'Silver': 0, 'Bronze': 0},
+            'Prev_Athletes': prev_athletes,
+            'Next_Medals': next_medals.to_dict() if next_medals is not None and not next_medals.empty else {'Gold': 0, 'Silver': 0, 'Bronze': 0},
+            'Next_Athletes': next_athletes
+        })
+    
+    return pd.DataFrame(host_data)
+
+# Create the layout
 layout = dbc.Container([
     html.H3("Host Country Analysis"),
     html.Hr(),
-    html.P("This section aims to analyze the 'Home Field Advantage'. Does the host nation perform better when hosting?"),
-    html.P("Analysis could include:"),
-     html.Ul([
-         html.Li("Comparing host nation medal count in host year vs. previous/subsequent games."),
-         html.Li("Visualizing changes in specific sports for the host nation."),
-         html.Li("Integrating socioeconomic data (GDP, population) for host cities/countries to explore correlations (requires additional data)."),
-     ]),
-    dbc.Alert("Host country analysis coming soon!", color="info"),
-    # Placeholder for Host Analysis components/callbacks (requires mapping Year to Host City/NOC)
+    html.P("This section analyzes the 'Home Field Advantage' by comparing host nations' performance during hosting years versus previous and subsequent games."),
+    
+    # Host Country Selection
+    dbc.Row([
+        dbc.Col([
+            html.Label("Select Host Country:", className="fw-bold"),
+            dcc.Dropdown(
+                id='host-country-dropdown',
+                options=[{'label': f"{city} ({year}) - {noc}", 'value': noc} 
+                        for year, (city, noc) in HOST_CITIES.items()],
+                value='USA',  # Default to USA
+                clearable=False,
+            )
+        ], width=12, md=6, lg=4)
+    ]),
+    html.Hr(),
+    
+    # Visualization Area
+    dbc.Spinner(
+        html.Div(id='host-analysis-visuals')
+    )
 ])
+
+# Callback to update visualizations
+@callback(
+    Output('host-analysis-visuals', 'children'),
+    Input('host-country-dropdown', 'value')
+)
+def update_host_analysis(selected_noc):
+    if not selected_noc:
+        return html.P("Please select a host country.")
+    
+    # Get host years for selected country
+    host_years = [year for year, (_, noc) in HOST_CITIES.items() if noc == selected_noc]
+    if not host_years:
+        return html.P(f"No hosting data found for {selected_noc}.")
+    
+    # Create visualizations for each host year
+    visualizations = []
+    for year in host_years:
+        city = HOST_CITIES[year][0]
+        
+        # Get data for this host year
+        host_data = get_host_data()
+        year_data = host_data[host_data['Year'] == year].iloc[0]
+        
+        # Create medal comparison figure
+        medal_fig = go.Figure()
+        
+        # Add host year data
+        medal_fig.add_trace(go.Bar(
+            name='Host Year',
+            x=['Gold', 'Silver', 'Bronze'],
+            y=[year_data['Host_Medals'].get('Gold', 0),
+               year_data['Host_Medals'].get('Silver', 0),
+               year_data['Host_Medals'].get('Bronze', 0)],
+            marker_color=['gold', 'silver', '#cd7f32']
+        ))
+        
+        # Add previous games data
+        if year > 1896:
+            medal_fig.add_trace(go.Bar(
+                name='Previous Games',
+                x=['Gold', 'Silver', 'Bronze'],
+                y=[year_data['Prev_Medals'].get('Gold', 0),
+                   year_data['Prev_Medals'].get('Silver', 0),
+                   year_data['Prev_Medals'].get('Bronze', 0)],
+                marker_color=['gold', 'silver', '#cd7f32'],
+                opacity=0.7
+            ))
+        
+        # Add next games data
+        if year < 2020:
+            medal_fig.add_trace(go.Bar(
+                name='Next Games',
+                x=['Gold', 'Silver', 'Bronze'],
+                y=[year_data['Next_Medals'].get('Gold', 0),
+                   year_data['Next_Medals'].get('Silver', 0),
+                   year_data['Next_Medals'].get('Bronze', 0)],
+                marker_color=['gold', 'silver', '#cd7f32'],
+                opacity=0.7
+            ))
+        
+        medal_fig.update_layout(
+            title=f"Medal Comparison for {selected_noc} at {city} {year}",
+            barmode='group',
+            xaxis_title='Medal Type',
+            yaxis_title='Number of Medals',
+            showlegend=True
+        )
+        
+        # Create athlete participation figure
+        athlete_fig = go.Figure()
+        
+        # Add host year data
+        athlete_fig.add_trace(go.Bar(
+            name='Host Year',
+            x=['Athletes'],
+            y=[year_data['Host_Athletes']],
+            marker_color='royalblue'
+        ))
+        
+        # Add previous games data
+        if year > 1896:
+            athlete_fig.add_trace(go.Bar(
+                name='Previous Games',
+                x=['Athletes'],
+                y=[year_data['Prev_Athletes']],
+                marker_color='royalblue',
+                opacity=0.7
+            ))
+        
+        # Add next games data
+        if year < 2020:
+            athlete_fig.add_trace(go.Bar(
+                name='Next Games',
+                x=['Athletes'],
+                y=[year_data['Next_Athletes']],
+                marker_color='royalblue',
+                opacity=0.7
+            ))
+        
+        athlete_fig.update_layout(
+            title=f"Athlete Participation for {selected_noc} at {city} {year}",
+            barmode='group',
+            xaxis_title='',
+            yaxis_title='Number of Athletes',
+            showlegend=True
+        )
+        
+        visualizations.extend([
+            dbc.Col(dcc.Graph(figure=medal_fig), width=12, className="mb-4"),
+            dbc.Col(dcc.Graph(figure=athlete_fig), width=12, className="mb-4")
+        ])
+    
+    # Add summary statistics
+    summary_stats = []
+    for year in host_years:
+        city = HOST_CITIES[year][0]
+        year_data = get_host_data()[get_host_data()['Year'] == year].iloc[0]
+        
+        # Calculate total medals
+        host_total = sum(year_data['Host_Medals'].values())
+        prev_total = sum(year_data['Prev_Medals'].values())
+        next_total = sum(year_data['Next_Medals'].values())
+        
+        # Calculate improvement
+        prev_improvement = ((host_total - prev_total) / prev_total * 100) if prev_total > 0 else float('inf')
+        next_improvement = ((host_total - next_total) / next_total * 100) if next_total > 0 else float('inf')
+        
+        # Calculate medal efficiency
+        host_efficiency = host_total / year_data['Host_Athletes'] if year_data['Host_Athletes'] > 0 else 0
+        prev_efficiency = prev_total / year_data['Prev_Athletes'] if year_data['Prev_Athletes'] and year_data['Prev_Athletes'] > 0 else 0
+        next_efficiency = next_total / year_data['Next_Athletes'] if year_data['Next_Athletes'] and year_data['Next_Athletes'] > 0 else 0
+        
+        # Calculate athlete change
+        prev_athlete_change = ((year_data['Host_Athletes'] - year_data['Prev_Athletes']) / year_data['Prev_Athletes'] * 100) if year_data['Prev_Athletes'] and year_data['Prev_Athletes'] > 0 else float('inf')
+        next_athlete_change = ((year_data['Host_Athletes'] - year_data['Next_Athletes']) / year_data['Next_Athletes'] * 100) if year_data['Next_Athletes'] and year_data['Next_Athletes'] > 0 else float('inf')
+        
+        summary_stats.append(
+            dbc.Card([
+                dbc.CardHeader(f"{city} {year}"),
+                dbc.CardBody([
+                    html.H5("Medal Statistics", className="mb-3"),
+                    html.P(f"Total Medals: {host_total}"),
+                    html.P(f"vs Previous Games: {prev_improvement:.1f}% change" if prev_total > 0 else "No previous games data"),
+                    html.P(f"vs Next Games: {next_improvement:.1f}% change" if next_total > 0 else "No next games data"),
+                    html.Hr(),
+                    html.H5("Athlete Statistics", className="mb-3"),
+                    html.P(f"Total Athletes: {year_data['Host_Athletes']}"),
+                    html.P(f"vs Previous Games: {prev_athlete_change:.1f}% change" if year_data['Prev_Athletes'] and year_data['Prev_Athletes'] > 0 else "No previous games data"),
+                    html.P(f"vs Next Games: {next_athlete_change:.1f}% change" if year_data['Next_Athletes'] and year_data['Next_Athletes'] > 0 else "No next games data"),
+                    html.Hr(),
+                    html.H5("Efficiency Statistics", className="mb-3"),
+                    html.P(f"Medals per Athlete: {host_efficiency:.2f}"),
+                    html.P(f"vs Previous Games: {((host_efficiency - prev_efficiency) / prev_efficiency * 100):.1f}% change" if prev_efficiency > 0 else "No previous games data"),
+                    html.P(f"vs Next Games: {((host_efficiency - next_efficiency) / next_efficiency * 100):.1f}% change" if next_efficiency > 0 else "No next games data")
+                ])
+            ], className="mb-3")
+        )
+    
+    return dbc.Row([
+        dbc.Col([
+            html.H4("Medal and Athlete Comparisons", className="mb-3"),
+            *visualizations
+        ], width=12, lg=8),
+        dbc.Col([
+            html.H4("Summary Statistics", className="mb-3"),
+            *summary_stats
+        ], width=12, lg=4)
+    ])

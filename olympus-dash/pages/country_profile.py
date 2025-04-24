@@ -4,10 +4,233 @@ from dash import html, dcc, callback, Input, Output
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
+from dash.exceptions import PreventUpdate
 # Updated import to use helpers from data_loader
 from data_loader import df, NOC_OPTIONS_NO_ALL, get_default_value
 
 dash.register_page(__name__, name='Country Profile')
+
+# Country code to name and flag mapping
+COUNTRY_MAPPING = {
+    'AFG': ('Afghanistan', '🇦🇫'),
+    'ALB': ('Albania', '🇦🇱'),
+    'ALG': ('Algeria', '🇩🇿'),
+    'AND': ('Andorra', '🇦🇩'),
+    'ANG': ('Angola', '🇦🇴'),
+    'ANT': ('Antigua and Barbuda', '🇦🇬'),
+    'ARG': ('Argentina', '🇦🇷'),
+    'ARM': ('Armenia', '🇦🇲'),
+    'ARU': ('Aruba', '🇦🇼'),
+    'ASA': ('American Samoa', '🇦🇸'),
+    'AUS': ('Australia', '🇦🇺'),
+    'AUT': ('Austria', '🇦🇹'),
+    'AZE': ('Azerbaijan', '🇦🇿'),
+    'BAH': ('Bahamas', '🇧🇸'),
+    'BAN': ('Bangladesh', '🇧🇩'),
+    'BAR': ('Barbados', '🇧🇧'),
+    'BDI': ('Burundi', '🇧🇮'),
+    'BEL': ('Belgium', '🇧🇪'),
+    'BEN': ('Benin', '🇧🇯'),
+    'BER': ('Bermuda', '🇧🇲'),
+    'BHU': ('Bhutan', '🇧🇹'),
+    'BIH': ('Bosnia and Herzegovina', '🇧🇦'),
+    'BIZ': ('Belize', '🇧🇿'),
+    'BLR': ('Belarus', '🇧🇾'),
+    'BOL': ('Bolivia', '🇧🇴'),
+    'BOT': ('Botswana', '🇧🇼'),
+    'BRA': ('Brazil', '🇧🇷'),
+    'BRN': ('Brunei', '🇧🇳'),
+    'BRU': ('Brunei', '🇧🇳'),
+    'BUL': ('Bulgaria', '🇧🇬'),
+    'BUR': ('Burkina Faso', '🇧🇫'),
+    'CAF': ('Central African Republic', '🇨🇫'),
+    'CAM': ('Cambodia', '🇰🇭'),
+    'CAN': ('Canada', '🇨🇦'),
+    'CAY': ('Cayman Islands', '🇰🇾'),
+    'CGO': ('Congo', '🇨🇬'),
+    'CHA': ('Chad', '🇹🇩'),
+    'CHI': ('Chile', '🇨🇱'),
+    'CHN': ('China', '🇨🇳'),
+    'CIV': ('Ivory Coast', '🇨🇮'),
+    'CMR': ('Cameroon', '🇨🇲'),
+    'COD': ('DR Congo', '🇨🇩'),
+    'COK': ('Cook Islands', '🇨🇰'),
+    'COL': ('Colombia', '🇨🇴'),
+    'COM': ('Comoros', '🇰🇲'),
+    'CPV': ('Cape Verde', '🇨🇻'),
+    'CRC': ('Costa Rica', '🇨🇷'),
+    'CRO': ('Croatia', '🇭🇷'),
+    'CUB': ('Cuba', '🇨🇺'),
+    'CYP': ('Cyprus', '🇨🇾'),
+    'CZE': ('Czech Republic', '🇨🇿'),
+    'DEN': ('Denmark', '🇩🇰'),
+    'DJI': ('Djibouti', '🇩🇯'),
+    'DMA': ('Dominica', '🇩🇲'),
+    'DOM': ('Dominican Republic', '🇩🇴'),
+    'ECU': ('Ecuador', '🇪🇨'),
+    'EGY': ('Egypt', '🇪🇬'),
+    'ERI': ('Eritrea', '🇪🇷'),
+    'ESA': ('El Salvador', '🇸🇻'),
+    'ESP': ('Spain', '🇪🇸'),
+    'EST': ('Estonia', '🇪🇪'),
+    'ETH': ('Ethiopia', '🇪🇹'),
+    'FIJ': ('Fiji', '🇫🇯'),
+    'FIN': ('Finland', '🇫🇮'),
+    'FRA': ('France', '🇫🇷'),
+    'FSM': ('Micronesia', '🇫🇲'),
+    'GAB': ('Gabon', '🇬🇦'),
+    'GAM': ('Gambia', '🇬🇲'),
+    'GBR': ('Great Britain', '🇬🇧'),
+    'GBS': ('Guinea-Bissau', '🇬🇼'),
+    'GEO': ('Georgia', '🇬🇪'),
+    'GEQ': ('Equatorial Guinea', '🇬🇶'),
+    'GER': ('Germany', '🇩🇪'),
+    'GHA': ('Ghana', '🇬🇭'),
+    'GRE': ('Greece', '🇬🇷'),
+    'GRN': ('Grenada', '🇬🇩'),
+    'GUA': ('Guatemala', '🇬🇹'),
+    'GUI': ('Guinea', '🇬🇳'),
+    'GUM': ('Guam', '🇬🇺'),
+    'GUY': ('Guyana', '🇬🇾'),
+    'HAI': ('Haiti', '🇭🇹'),
+    'HKG': ('Hong Kong', '🇭🇰'),
+    'HON': ('Honduras', '🇭🇳'),
+    'HUN': ('Hungary', '🇭🇺'),
+    'INA': ('Indonesia', '🇮🇩'),
+    'IND': ('India', '🇮🇳'),
+    'IRI': ('Iran', '🇮🇷'),
+    'IRL': ('Ireland', '🇮🇪'),
+    'IRQ': ('Iraq', '🇮🇶'),
+    'ISL': ('Iceland', '🇮🇸'),
+    'ISR': ('Israel', '🇮🇱'),
+    'ISV': ('US Virgin Islands', '🇻🇮'),
+    'ITA': ('Italy', '🇮🇹'),
+    'IVB': ('British Virgin Islands', '🇻🇬'),
+    'JAM': ('Jamaica', '🇯🇲'),
+    'JOR': ('Jordan', '🇯🇴'),
+    'JPN': ('Japan', '🇯🇵'),
+    'KAZ': ('Kazakhstan', '🇰🇿'),
+    'KEN': ('Kenya', '🇰🇪'),
+    'KGZ': ('Kyrgyzstan', '🇰🇬'),
+    'KIR': ('Kiribati', '🇰🇮'),
+    'KOR': ('South Korea', '🇰🇷'),
+    'KOS': ('Kosovo', '🇽🇰'),
+    'KSA': ('Saudi Arabia', '🇸🇦'),
+    'KUW': ('Kuwait', '🇰🇼'),
+    'LAO': ('Laos', '🇱🇦'),
+    'LAT': ('Latvia', '🇱🇻'),
+    'LBA': ('Libya', '🇱🇾'),
+    'LBR': ('Liberia', '🇱🇷'),
+    'LCA': ('Saint Lucia', '🇱🇨'),
+    'LES': ('Lesotho', '🇱🇸'),
+    'LIE': ('Liechtenstein', '🇱🇮'),
+    'LTU': ('Lithuania', '🇱🇹'),
+    'LUX': ('Luxembourg', '🇱🇺'),
+    'MAD': ('Madagascar', '🇲🇬'),
+    'MAR': ('Morocco', '🇲🇦'),
+    'MAS': ('Malaysia', '🇲🇾'),
+    'MAW': ('Malawi', '🇲🇼'),
+    'MDA': ('Moldova', '🇲🇩'),
+    'MDV': ('Maldives', '🇲🇻'),
+    'MEX': ('Mexico', '🇲🇽'),
+    'MHL': ('Marshall Islands', '🇲🇭'),
+    'MKD': ('North Macedonia', '🇲🇰'),
+    'MLI': ('Mali', '🇲🇱'),
+    'MLT': ('Malta', '🇲🇹'),
+    'MNG': ('Mongolia', '🇲🇳'),
+    'MNE': ('Montenegro', '🇲🇪'),
+    'MON': ('Monaco', '🇲🇨'),
+    'MOZ': ('Mozambique', '🇲🇿'),
+    'MRI': ('Mauritius', '🇲🇺'),
+    'MTN': ('Mauritania', '🇲🇷'),
+    'MYA': ('Myanmar', '🇲🇲'),
+    'NAM': ('Namibia', '🇳🇦'),
+    'NCA': ('Nicaragua', '🇳🇮'),
+    'NED': ('Netherlands', '🇳🇱'),
+    'NEP': ('Nepal', '🇳🇵'),
+    'NGR': ('Nigeria', '🇳🇬'),
+    'NIG': ('Niger', '🇳🇪'),
+    'NOR': ('Norway', '🇳🇴'),
+    'NRU': ('Nauru', '🇳🇷'),
+    'NZL': ('New Zealand', '🇳🇿'),
+    'OMA': ('Oman', '🇴🇲'),
+    'PAK': ('Pakistan', '🇵🇰'),
+    'PAN': ('Panama', '🇵🇦'),
+    'PAR': ('Paraguay', '🇵🇾'),
+    'PER': ('Peru', '🇵🇪'),
+    'PHI': ('Philippines', '🇵🇭'),
+    'PLE': ('Palestine', '🇵🇸'),
+    'PLW': ('Palau', '🇵🇼'),
+    'PNG': ('Papua New Guinea', '🇵🇬'),
+    'POL': ('Poland', '🇵🇱'),
+    'POR': ('Portugal', '🇵🇹'),
+    'PRK': ('North Korea', '🇰🇵'),
+    'PUR': ('Puerto Rico', '🇵🇷'),
+    'QAT': ('Qatar', '🇶🇦'),
+    'ROU': ('Romania', '🇷🇴'),
+    'RSA': ('South Africa', '🇿🇦'),
+    'RUS': ('Russia', '🇷🇺'),
+    'RWA': ('Rwanda', '🇷🇼'),
+    'SAM': ('Samoa', '🇼🇸'),
+    'SEN': ('Senegal', '🇸🇳'),
+    'SEY': ('Seychelles', '🇸🇨'),
+    'SGP': ('Singapore', '🇸🇬'),
+    'SKN': ('Saint Kitts and Nevis', '🇰🇳'),
+    'SLE': ('Sierra Leone', '🇸🇱'),
+    'SLO': ('Slovenia', '🇸🇮'),
+    'SMR': ('San Marino', '🇸🇲'),
+    'SOL': ('Solomon Islands', '🇸🇧'),
+    'SOM': ('Somalia', '🇸🇴'),
+    'SRB': ('Serbia', '🇷🇸'),
+    'SRI': ('Sri Lanka', '🇱🇰'),
+    'SSD': ('South Sudan', '🇸🇸'),
+    'STP': ('São Tomé and Príncipe', '🇸🇹'),
+    'SUD': ('Sudan', '🇸🇩'),
+    'SUI': ('Switzerland', '🇨🇭'),
+    'SUR': ('Suriname', '🇸🇷'),
+    'SVK': ('Slovakia', '🇸🇰'),
+    'SWE': ('Sweden', '🇸🇪'),
+    'SWZ': ('Eswatini', '🇸🇿'),
+    'SYR': ('Syria', '🇸🇾'),
+    'TAN': ('Tanzania', '🇹🇿'),
+    'TGA': ('Tonga', '🇹🇴'),
+    'THA': ('Thailand', '🇹🇭'),
+    'TJK': ('Tajikistan', '🇹🇯'),
+    'TKM': ('Turkmenistan', '🇹🇲'),
+    'TLS': ('Timor-Leste', '🇹🇱'),
+    'TOG': ('Togo', '🇹🇬'),
+    'TPE': ('Chinese Taipei', '🇹🇼'),
+    'TTO': ('Trinidad and Tobago', '🇹🇹'),
+    'TUN': ('Tunisia', '🇹🇳'),
+    'TUR': ('Turkey', '🇹🇷'),
+    'TUV': ('Tuvalu', '🇹🇻'),
+    'UAE': ('United Arab Emirates', '🇦🇪'),
+    'UGA': ('Uganda', '🇺🇬'),
+    'UKR': ('Ukraine', '🇺🇦'),
+    'URU': ('Uruguay', '🇺🇾'),
+    'USA': ('United States', '🇺🇸'),
+    'UZB': ('Uzbekistan', '🇺🇿'),
+    'VAN': ('Vanuatu', '🇻🇺'),
+    'VEN': ('Venezuela', '🇻🇪'),
+    'VIE': ('Vietnam', '🇻🇳'),
+    'VIN': ('Saint Vincent and the Grenadines', '🇻🇨'),
+    'YEM': ('Yemen', '🇾🇪'),
+    'ZAM': ('Zambia', '🇿🇲'),
+    'ZIM': ('Zimbabwe', '🇿🇼')
+}
+
+# Function to get country display name for dropdown
+def get_country_display(noc):
+    if noc in COUNTRY_MAPPING:
+        name, flag = COUNTRY_MAPPING[noc]
+        return f"{name} - {noc} {flag}"
+    return noc
+
+# Create custom dropdown options with country name, NOC, and flag
+custom_options = [
+    {'label': get_country_display(opt['value']), 'value': opt['value']}
+    for opt in NOC_OPTIONS_NO_ALL
+]
 
 # Use helper to get default value safely
 default_noc = get_default_value(NOC_OPTIONS_NO_ALL)
@@ -17,10 +240,10 @@ layout = dbc.Container([
     html.Hr(),
     dbc.Row([
         dbc.Col([
-            html.Label("Select Country (NOC):", className="fw-bold"),
+            html.Label("Select Country:", className="fw-bold"),
             dcc.Dropdown(
                 id='country-profile-noc-dropdown',
-                options=NOC_OPTIONS_NO_ALL, # Use options list from data_loader
+                options=custom_options,
                 value=default_noc,
                 clearable=False,
             )
@@ -31,8 +254,24 @@ layout = dbc.Container([
     # Visualization Area with Spinner
     dbc.Spinner(
         html.Div(id='country-profile-visuals') # Content will be loaded here by callback
-    )
+    ),
+    
+    # Hidden store to receive country from globe
+    dcc.Store(id='clicked-country', data=None, storage_type='session')
 ])
+
+# Callback to update dropdown when country is selected from globe
+@callback(
+    Output('country-profile-noc-dropdown', 'value'),
+    Input('clicked-country', 'data'),
+    prevent_initial_call=True
+)
+def update_dropdown_from_globe(country):
+    if country is None or country not in [opt['value'] for opt in NOC_OPTIONS_NO_ALL]:
+        print(f"Invalid country code: {country}")  # Debug print
+        raise PreventUpdate
+    print(f"Updating dropdown to: {country}")  # Debug print
+    return country
 
 # Combined Callback for ALL country profile outputs
 @callback(
@@ -41,7 +280,7 @@ layout = dbc.Container([
 )
 def update_country_visuals(selected_noc):
     if not selected_noc or df.empty:
-        return html.P("Please select a country (NOC) from the dropdown or wait for data to load.")
+        return html.P("Please select a country from the dropdown or wait for data to load.")
 
     # Filter data for the selected country
     country_df = df[df['NOC'] == selected_noc].copy()
