@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 from dash.exceptions import PreventUpdate
 # Updated import to use helpers from data_loader
 from data_loader import df, NOC_OPTIONS_NO_ALL, get_default_value
+import pandas as pd
 
 dash.register_page(__name__, name='Country Profile')
 
@@ -279,80 +280,98 @@ def update_dropdown_from_globe(country):
     Input('country-profile-noc-dropdown', 'value')
 )
 def update_country_visuals(selected_noc):
-    if not selected_noc or df.empty:
-        return html.P("Please select a country from the dropdown or wait for data to load.")
+    if not selected_noc:
+        raise PreventUpdate # Or return html.P("Please select a country.")
+
+    # Get country name and flag
+    country_name, country_flag = COUNTRY_MAPPING.get(selected_noc, (selected_noc, ''))
 
     # Filter data for the selected country
     country_df = df[df['NOC'] == selected_noc].copy()
+
     if country_df.empty:
-        return html.P(f"No data found for {selected_noc}.")
+        return html.Div([ # Return a list
+            html.H4(f"{country_name} {country_flag} ({selected_noc})"),
+            dbc.Alert(f"No data available for {country_name}.")
+        ])
 
-    # --- Calculations ---
-    # 1. Medals over Time
-    medals_df = country_df[country_df['Medal'] != 'None']
-    medals_time = medals_df.groupby(['Year', 'Medal']).size().unstack(fill_value=0).reset_index()
+    # --- Calculations & Components --- 
+    # Filter for medals
+    medal_df = country_df[country_df['Medal'] != 'None'].copy()
 
-    # 2. Gender over Time
-    gender_time = country_df.drop_duplicates(subset=['Year', 'Name', 'Gender'])\
-                          .groupby(['Year', 'Gender']).size().unstack(fill_value=0).reset_index()
-
-    # 3. Top Sports
-    top_sports = medals_df['Sport'].value_counts().reset_index(name='Medal Count').head(10)
-
-    # 4. Age Distribution
-    age_data = country_df['Age'].dropna()
-
-    # --- Generate Figures ---
-    # Figure 1: Medals
-    if not medals_time.empty:
-        medal_columns = ['Gold', 'Silver', 'Bronze']
-        for medal in medal_columns:
-             if medal not in medals_time.columns: medals_time[medal] = 0 # Ensure columns exist
-        medals_fig = px.bar(medals_time, x='Year', y=medal_columns,
-                          title=f"Medals Won by {selected_noc} Over Time",
-                          labels={'value': 'Medals', 'variable': 'Medal'},
-                          color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#cd7f32'})
-        medals_fig.update_layout(xaxis_title='Year', yaxis_title='Number of Medals', legend_title_text='Medal', barmode='stack')
+    # --- FIX: Deduplicate event medals for accurate team counts ---
+    if not medal_df.empty:
+        unique_event_medals_country = medal_df.drop_duplicates(
+            subset=['Year', 'Season', 'Event', 'Medal'] # Region/NOC not needed here
+        )
     else:
-        medals_fig = go.Figure().update_layout(title=f"No Medal Data for {selected_noc}")
+        unique_event_medals_country = pd.DataFrame(columns=medal_df.columns) # Empty df if no medals
+    # --- END FIX ---
 
-    # Figure 2: Gender
-    if not gender_time.empty:
-        gender_columns = ['M', 'F']
-        for gender in gender_columns:
-            if gender not in gender_time.columns: gender_time[gender] = 0 # Ensure M/F exist
-        gender_fig = px.line(gender_time, x='Year', y=gender_columns,
-                           title=f"Athlete Participation by Gender ({selected_noc})",
-                           labels={'value': 'Athletes', 'variable': 'Gender'},
-                           color_discrete_map={'M': 'royalblue', 'F': 'lightcoral'}, markers=True)
-        gender_fig.update_layout(xaxis_title='Year', yaxis_title='Number of Unique Athletes', legend_title_text='Gender')
-    else:
-        gender_fig = go.Figure().update_layout(title=f"No Gender Data for {selected_noc}")
+    # --- Use deduplicated data for overall counts/trends --- 
+    # 1. Overall Medal Counts (Using unique_event_medals_country)
+    total_medals = len(unique_event_medals_country)
+    medal_counts = unique_event_medals_country['Medal'].value_counts().reindex(['Gold', 'Silver', 'Bronze'], fill_value=0)
 
+    # 2. Medals Over Time (Using unique_event_medals_country)
+    medals_over_time = unique_event_medals_country.groupby(['Year', 'Season'])['Medal'].count().unstack(fill_value=0).reset_index()
+    fig_medals_time = go.Figure()
+    if 'Summer' in medals_over_time.columns:
+        fig_medals_time.add_trace(go.Scatter(x=medals_over_time['Year'], y=medals_over_time['Summer'], mode='lines+markers', name='Summer Medals'))
+    if 'Winter' in medals_over_time.columns:
+        fig_medals_time.add_trace(go.Scatter(x=medals_over_time['Year'], y=medals_over_time['Winter'], mode='lines+markers', name='Winter Medals'))
+    fig_medals_time.update_layout(title='Medal Trend Over Time',
+                                 xaxis_title='Year', yaxis_title='Medals Won',
+                                 hovermode="x unified", template='plotly_white')
 
-    # Figure 3: Top Sports
-    if not top_sports.empty:
-        sports_fig = px.bar(top_sports, x='Medal Count', y='Sport', orientation='h',
-                           title=f"Top 10 Medal-Winning Sports ({selected_noc})")
-        sports_fig.update_layout(xaxis_title='Total Medals Won', yaxis_title='Sport', yaxis={'categoryorder':'total ascending'})
-    else:
-         sports_fig = go.Figure().update_layout(title=f"No Medal Data (Top Sports) for {selected_noc}")
+    # 3. Medals per Sport (Using unique_event_medals_country)
+    medals_by_sport = unique_event_medals_country['Sport'].value_counts().nlargest(15).reset_index()
+    medals_by_sport.columns=['Sport', 'Medal Count']
+    fig_sport_medals = px.bar(medals_by_sport, x='Sport', y='Medal Count',
+                              title='Top 15 Sports by Medals Won',
+                              template='plotly_white')
+    fig_sport_medals.update_layout(yaxis_title='Total Medals')
 
+    # --- Use original medal_df for athlete-specific stats --- 
+    # 4. Top Athletes (Using original medal_df)
+    top_athletes = medal_df['Name'].value_counts().nlargest(5).reset_index()
+    top_athletes.columns=['Athlete', 'Medal Count']
+    athlete_list_items = [dbc.ListGroupItem(f"{row['Athlete']} ({row['Medal Count']} medals)") for index, row in top_athletes.iterrows()]
 
-    # Figure 4: Age Distribution
-    if not age_data.empty:
-        age_fig = px.histogram(age_data, nbins=20, title=f"Age Distribution of Athletes ({selected_noc})")
-        age_fig.update_layout(xaxis_title='Age', yaxis_title='Number of Athletes')
-    else:
-        age_fig = go.Figure().update_layout(title=f"No Age Data for {selected_noc}")
+    # 5. First/Last Appearance & Medal (Using original country_df & unique_event_medals_country)
+    first_appearance = country_df['Year'].min()
+    last_appearance = country_df['Year'].max()
+    first_medal_year = unique_event_medals_country['Year'].min() if not unique_event_medals_country.empty else "N/A"
+    num_olympics = country_df['Games'].nunique()
 
-    # --- Assemble Layout for Output Div ---
-    layout_content = dbc.Row([
-        dbc.Col(dcc.Graph(figure=medals_fig), width=12, lg=6, className="mb-4"),
-        dbc.Col(dcc.Graph(figure=gender_fig), width=12, lg=6, className="mb-4"),
-        dbc.Col(dcc.Graph(figure=sports_fig), width=12, lg=6, className="mb-4"),
-        dbc.Col(dcc.Graph(figure=age_fig), width=12, lg=6, className="mb-4"),
-        # Add more charts or summary cards here in new Cols
+    # --- Assemble Layout --- 
+    layout_content = html.Div([
+        html.H4(f"{country_name} {country_flag} ({selected_noc})"),
+        html.Hr(),
+        dbc.Row([
+            dbc.Col(dbc.Card(dbc.CardBody([
+                html.H5("Overall Performance", className="card-title"),
+                html.P(f"Total Unique Medals: {total_medals}"),
+                dbc.Row([
+                    dbc.Col(f"🥇 Gold: {medal_counts.get('Gold', 0)}"),
+                    dbc.Col(f"🥈 Silver: {medal_counts.get('Silver', 0)}"),
+                    dbc.Col(f"🥉 Bronze: {medal_counts.get('Bronze', 0)}")
+                ], className="mb-2"),
+                html.P(f"Participated in {num_olympics} Olympics ({first_appearance} - {last_appearance})"),
+                html.P(f"First Medal Won: {first_medal_year}"),
+            ])), width=12, md=4, className="mb-3"),
+
+            dbc.Col(dbc.Card(dbc.CardBody([
+                html.H5("Top Athletes (Most Medals)", className="card-title"),
+                dbc.ListGroup(athlete_list_items, flush=True)
+            ])), width=12, md=4, className="mb-3"),
+            
+            dbc.Col(width=12, md=4, className="mb-3") # Placeholder or for future use
+        ]),
+        dbc.Row([
+            dbc.Col(dcc.Graph(figure=fig_medals_time), width=12, lg=6, className="mb-3"),
+            dbc.Col(dcc.Graph(figure=fig_sport_medals), width=12, lg=6, className="mb-3")
+        ])
     ])
 
     return layout_content

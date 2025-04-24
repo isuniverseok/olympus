@@ -245,122 +245,66 @@ def update_sport_visuals(selected_sport, selected_year, selected_noc, selected_g
              ], color="warning")
          return no_data_alert, sport_icon_element, sport_desc_element, sport_rules_element, event_options, event_value, event_disabled
 
-    # --- Calculations --- (Mostly remain the same, operate on final filtered_df)
+    # --- Calculations --- (Operate on final filtered_df)
     medal_df = filtered_df[filtered_df['Medal'] != 'None'].copy()
 
-    # Key Sportsperson (Overall for sport, unaffected by filters)
-    key_sportsperson_info = "N/A"
-    sport_overall_df = df[(df['Sport'] == selected_sport) & (df['Medal'] != 'None')]
-    if not sport_overall_df.empty:
-        overall_medal_counts = sport_overall_df['Name'].value_counts()
-        if not overall_medal_counts.empty:
-            top_athlete = overall_medal_counts.idxmax()
-            top_athlete_medals = overall_medal_counts.max()
-            key_sportsperson_info = f"{top_athlete} ({top_athlete_medals} medals overall)"
-        else:
-            key_sportsperson_info = "No overall medal winners."
-
-    # --- Plot Definitions --- (Plots now reflect all filters)
-    plot_height = 350
-
-    # 1. Top Countries Plot (Conditional)
-    top_noc_fig = go.Figure().update_layout(title="Select 'All' NOCs", title_x=0.5, height=plot_height)
-    if selected_noc == DEFAULT_DROPDOWN_LABEL:
-        top_nocs_filtered = medal_df['NOC'].value_counts().reset_index(name='Medal Count').head(10)
-        if not top_nocs_filtered.empty:
-            top_noc_fig = px.bar(top_nocs_filtered, x='NOC', y='Medal Count', title=f"Top 10 Countries by Medals")
-            top_noc_fig.update_layout(xaxis_title=None, yaxis_title='Medals Won', title_x=0.5, height=plot_height)
-        else:
-            top_noc_fig = go.Figure().update_layout(title="No Medal Data", title_x=0.5, height=plot_height)
-
-    # 2. Participation Plot (Conditional)
-    participation_fig = go.Figure().update_layout(title="Select 'All' Years", title_x=0.5, height=plot_height)
-    if selected_year == DEFAULT_DROPDOWN_LABEL:
-        # Need to group by year, considering other filters
-        participation_by_year = filtered_df.drop_duplicates(subset=['Year', 'Name']).groupby('Year').size().reset_index(name='Unique Athletes')
-        if not participation_by_year.empty:
-            participation_fig = px.line(participation_by_year, x='Year', y='Unique Athletes', markers=True, title="Athlete Participation Trend")
-            participation_fig.update_layout(xaxis_title='Olympic Year', yaxis_title='Unique Athletes', title_x=0.5, height=plot_height)
-        else:
-            participation_fig = go.Figure().update_layout(title="No Participation Data", title_x=0.5, height=plot_height)
-
-    # 3. Medal Breakdown Plot
-    medal_counts = medal_df['Medal'].value_counts().reindex(['Gold', 'Silver', 'Bronze']).fillna(0)
-    medal_breakdown_fig = go.Figure().update_layout(title="No Medal Data", title_x=0.5, height=plot_height)
-    if not medal_counts.empty and medal_counts.sum() > 0:
-        medal_breakdown_fig = px.bar(medal_counts, x=medal_counts.index, y=medal_counts.values, title="Medal Distribution",
-                                   color=medal_counts.index, color_discrete_map={'Gold': 'gold', 'Silver': 'silver', 'Bronze': '#cd7f32'}, height=plot_height)
-        medal_breakdown_fig.update_layout(showlegend=False, title_x=0.5, yaxis_title="Count", xaxis_title=None)
-
-    # 4. Gender Distribution Plot
-    gender_counts = filtered_df.drop_duplicates(subset=['Name'])['Gender'].value_counts()
-    gender_fig = go.Figure().update_layout(title="No Gender Data", title_x=0.5, height=plot_height)
-    # Only show pie if there's more than one gender in the filtered data
-    if not gender_counts.empty and len(gender_counts) > 1:
-        gender_fig = px.pie(gender_counts, values=gender_counts.values, names=gender_counts.index, title="Gender Distribution", hole=0.4, height=plot_height)
-        gender_fig.update_traces(textposition='outside', textinfo='percent+label')
-        gender_fig.update_layout(showlegend=False, title_x=0.5, margin=dict(t=60, b=20, l=20, r=20))
-    elif not gender_counts.empty:
-         # If only one gender, maybe just state it?
-         single_gender = gender_counts.index[0]
-         gender_fig.update_layout(title=f"Only {single_gender} Athletes Selected", title_x=0.5)
-
-
-    # 5. Age Distribution Plot
-    age_data = filtered_df['Age'].dropna()
-    age_fig = go.Figure().update_layout(title="No Age Data Available", title_x=0.5, height=plot_height)
-    if not age_data.empty:
-        age_fig = px.histogram(age_data, nbins=20, title="Age Distribution", height=plot_height)
-        age_fig.update_layout(title_x=0.5, yaxis_title="Count", xaxis_title="Age", bargap=0.1)
-
-    # 6. Top Athletes List
-    top_athletes_list = [html.Li("No medal winners found.")]
+    # --- FIX: Deduplicate event medals per region for accurate team counts ---
     if not medal_df.empty:
-        athlete_medals_filtered = medal_df.groupby('Name')['Medal'].count().sort_values(ascending=False).head(5)
-        if not athlete_medals_filtered.empty:
-            top_athletes_list = [ html.Li([f"{name}: ", html.Strong(f"{count} medal{'s' if count > 1 else ''}")], className="mb-1") for name, count in athlete_medals_filtered.items() ]
+        unique_event_medals_sport = medal_df.drop_duplicates(
+             subset=['Year', 'Season', 'Event', 'Medal', 'region'] # Use region here as well
+        )
+    else:
+        unique_event_medals_sport = pd.DataFrame(columns=medal_df.columns) # Empty df if no medals
+    # --- END FIX ---
 
-    # 7. Physical Stats Cards
-    desc_stats = filtered_df[['Age', 'Height', 'Weight']].describe().loc[['mean', 'min', 'max']]
-    stats_cards = []
-    physical_stats_available = False
-    if not desc_stats.empty:
-         for col in ['Age', 'Height', 'Weight']:
-            if col in desc_stats.columns and not desc_stats.loc[['mean','min','max'], col].isnull().all():
-                physical_stats_available = True
-                stats_cards.append(
-                    dbc.Col(html.Div([html.H6(col, className="text-muted small text-uppercase fw-bold"), html.P(f"Avg: {desc_stats.loc['mean', col]:.1f}" if pd.notna(desc_stats.loc['mean', col]) else "N/A", className="mb-0 small"), html.P(f"Min: {desc_stats.loc['min', col]:.1f}" if pd.notna(desc_stats.loc['min', col]) else "N/A", className="mb-0 small"), html.P(f"Max: {desc_stats.loc['max', col]:.1f}" if pd.notna(desc_stats.loc['max', col]) else "N/A", className="mb-0 small")], className="text-center p-2 border rounded shadow-sm"), width=12, md=4, className="mb-2"))
+    # Now use 'unique_event_medals_sport' for medal-related calculations
+    # Example: Top medal-winning countries for this sport/filter
+    if not unique_event_medals_sport.empty:
+        top_countries_medals = unique_event_medals_sport.groupby('region')['Medal'].count().nlargest(10).reset_index()
+        fig_top_countries = px.bar(top_countries_medals,
+                                     x='region',
+                                     y='Medal',
+                                     title=f"Top 10 Countries by Medals ({filter_title})",
+                                     labels={'region':'Country', 'Medal':'Total Medals'},
+                                     template='plotly_white')
+        fig_top_countries.update_layout(xaxis_title="", yaxis_title="Total Medals")
+        top_countries_card = dbc.Card([dbc.CardHeader("Top Countries by Medal Count"), dbc.CardBody(dcc.Graph(figure=fig_top_countries))])
+    else:
+        top_countries_card = dbc.Alert("No medal data for Top Countries chart.", color="info")
 
-    # 8. Key Numbers
-    num_events = filtered_df['Event'].nunique()
-    num_athletes = filtered_df['Name'].nunique()
+    # Example: Medal distribution over time for this sport/filter
+    if not unique_event_medals_sport.empty:
+        medals_over_time = unique_event_medals_sport.groupby('Year')['Medal'].count().reset_index()
+        fig_medals_time = px.line(medals_over_time, x='Year', y='Medal', title=f"Medals Over Time ({filter_title})", markers=True,
+                                  labels={'Year': 'Olympic Year', 'Medal': 'Total Medals'},
+                                  template='plotly_white')
+        medals_time_card = dbc.Card([dbc.CardHeader("Medal Trends Over Time"), dbc.CardBody(dcc.Graph(figure=fig_medals_time))])
+    else:
+        medals_time_card = dbc.Alert("No medal data for Trends Over Time chart.", color="info")
 
-    # --- Assemble Visual Layout --- (Layout structure mostly the same)
-    card_common_style = {"boxShadow": "0 2px 4px 0 rgba(0,0,0,0.1)", "border": "none", "borderRadius": "8px", "height": "100%"}
-    plot_card_body_style = {"padding": "0.5rem"}
+    # Example: Top athletes by medals for this sport/filter
+    # IMPORTANT: For athlete ranking, we SHOULD use the original medal_df (before deduplication)
+    if not medal_df.empty:
+        top_athletes = medal_df.groupby(['Name', 'NOC'])['Medal'].count().nlargest(10).reset_index()
+        fig_top_athletes = px.bar(top_athletes,
+                                  x='Name',
+                                  y='Medal',
+                                  color='NOC',
+                                  title=f"Top 10 Athletes by Medals ({filter_title})",
+                                  labels={'Name':'Athlete', 'Medal':'Total Medals', 'NOC': 'Country'},
+                                  template='plotly_white')
+        fig_top_athletes.update_layout(xaxis_title="", yaxis_title="Total Medals")
+        top_athletes_card = dbc.Card([dbc.CardHeader("Top Athletes by Medal Count"), dbc.CardBody(dcc.Graph(figure=fig_top_athletes))])
+    else:
+        top_athletes_card = dbc.Alert("No medal data for Top Athletes chart.", color="info")
 
-    layout_content = dbc.Container([
-        # Row 1: Key Metrics & Top Performers
-        dbc.Row([
-            dbc.Col(dbc.Card(dbc.CardBody([html.H5("Selection Overview", className="card-title text-primary mb-3"), html.Small(f"Filters: {filter_context_text}", className="text-muted d-block mb-3"), html.P([html.I(className="bi bi-people-fill me-2"), html.Strong(f"Athletes in Selection: {num_athletes}")], className="mb-2"), html.P([html.I(className="bi bi-diagram-3-fill me-2"), html.Strong(f"Events in Selection: {num_events}")], className="mb-3"), html.Hr(className="my-3"), html.H6("Sport's Most Decorated:", className="text-muted small text-uppercase mb-2"), html.P([html.I(className="bi bi-person-check-fill me-2"), key_sportsperson_info], className="fw-bold")]), color="light", className="h-100 shadow-sm"), width=12, md=6, lg=4, className="mb-4"),
-            dbc.Col(dbc.Card(dbc.CardBody([html.H5(f"Top 5 Medal Winners", className="card-title text-primary mb-3"), html.Small(f"In current selection.", className="text-muted d-block mb-3"), html.Ul(top_athletes_list, className="list-unstyled ps-3 mt-3")]), className="h-100", style=card_common_style), width=12, md=6, lg=4, className="mb-4"),
-            dbc.Col(dbc.Card(dbc.CardBody([html.H5("Physical Stats", className="card-title text-primary mb-3 text-center"), html.Small("Avg, min, max in selection.", className="text-muted d-block mb-3 text-center"), dbc.Row(stats_cards, justify="center", className="g-3") if physical_stats_available else dbc.Alert("No physical stats data.", color="light", className="text-center small")]), className="h-100", style=card_common_style), width=12, lg=4, className="mb-4") if physical_stats_available else None,
-        ], className="mb-4 align-items-stretch"),
 
-        # Row 2: Distributions (Medals, Gender, Age)
-        dbc.Row([
-            dbc.Col(dbc.Card(dbc.CardBody([html.H5([html.I(className="bi bi-award-fill me-2"),"Medal Distribution"], className="card-title text-primary mb-3"), html.Small("Counts in selection.", className="text-muted d-block mb-2"), dcc.Graph(figure=medal_breakdown_fig, config={'displayModeBar': False})], style=plot_card_body_style), className="h-100", style=card_common_style), width=12, lg=4, className="mb-4"),
-            dbc.Col(dbc.Card(dbc.CardBody([html.H5([html.I(className="bi bi-gender-ambiguous me-2"), "Gender Distribution"], className="card-title text-primary mb-3"), html.Small("% unique athletes in selection.", className="text-muted d-block mb-2"), dcc.Graph(figure=gender_fig, config={'displayModeBar': False})], style=plot_card_body_style), className="h-100", style=card_common_style), width=12, lg=4, className="mb-4"),
-            dbc.Col(dbc.Card(dbc.CardBody([html.H5([html.I(className="bi bi-graph-up me-2"),"Age Distribution"], className="card-title text-primary mb-3"), html.Small("Histogram of ages in selection.", className="text-muted d-block mb-2"), dcc.Graph(figure=age_fig, config={'displayModeBar': False})], style=plot_card_body_style), className="h-100", style=card_common_style), width=12, lg=4, className="mb-4"),
-        ], className="mb-4 align-items-stretch"),
+    # --- Assemble Final Layout ---
+    layout_content = dbc.Row([
+         dbc.Col([top_countries_card], width=12, md=6, className="mb-4"),
+         dbc.Col([medals_time_card], width=12, md=6, className="mb-4"),
+         dbc.Col([top_athletes_card], width=12, className="mb-4"),
+    ])
 
-        # Row 3: Conditional Time Series / Country Plots
-        dbc.Row([
-            dbc.Col(dbc.Card(dbc.CardBody([html.H5([html.I(className="bi bi-flag-fill me-2"),"Country Performance"], className="card-title text-primary mb-3"), html.Small("Top 10 medal countries (Requires 'All' NOCs).", className="text-muted d-block mb-2"), dcc.Graph(figure=top_noc_fig)], style=plot_card_body_style), className="h-100", style=card_common_style), width=12, lg=6, className="mb-4") if selected_noc == DEFAULT_DROPDOWN_LABEL else None,
-            dbc.Col(dbc.Card(dbc.CardBody([html.H5([html.I(className="bi bi-calendar-event-fill me-2"),"Participation Over Time"], className="card-title text-primary mb-3"), html.Small("Unique athletes trend (Requires 'All' Years).", className="text-muted d-block mb-2"), dcc.Graph(figure=participation_fig)], style=plot_card_body_style), className="h-100", style=card_common_style), width=12, lg=6, className="mb-4") if selected_year == DEFAULT_DROPDOWN_LABEL else None,
-        ], className="mb-4 align-items-stretch"),
-
-    ], fluid=True)
-
-    # Return layout, icon, description, rules, and event dropdown state
+    # Return all outputs
     return layout_content, sport_icon_element, sport_desc_element, sport_rules_element, event_options, event_value, event_disabled

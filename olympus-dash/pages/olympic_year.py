@@ -12,7 +12,8 @@ from data_loader import df, YEAR_OPTIONS_NO_ALL, get_default_value, DEFAULT_DROP
 dash.register_page(__name__, name='Olympic Year')
 
 # Placeholder for when image is not found or applicable
-PLACEHOLDER_IMAGE = '' # Use empty string to hide image if not found
+# Use the path to the generic olympic logo as the fallback
+PLACEHOLDER_IMAGE = '/assets/imgs/olympic_logo.png' 
 # Base path for images within the assets folder
 IMAGE_BASE_PATH = 'assets/imgs'
 
@@ -222,7 +223,18 @@ def update_year_visuals(selected_year, selected_season):
     # 2. Medal Table Calculation
     medals_df = year_df[year_df['Medal'] != 'None'].copy()
     if not medals_df.empty:
-        medal_counts = medals_df.groupby(['region', 'Medal']).size().unstack(fill_value=0)
+        # --- FIX: Deduplicate based on event medal per region --- 
+        # Keep only one record for each unique Event-Medal combination per Region
+        # for the filtered year/season to count team medals correctly.
+        unique_event_medals = medals_df.drop_duplicates(
+            subset=['Year', 'Season', 'Event', 'Medal', 'region']
+        )
+        # --- END FIX ---
+
+        # Now group the deduplicated data
+        medal_counts = unique_event_medals.groupby(['region', 'Medal']).size().unstack(fill_value=0)
+        
+        # Ensure Gold, Silver, Bronze columns exist (remains the same)
         for medal_type in ['Gold', 'Silver', 'Bronze']:
             if medal_type not in medal_counts.columns:
                 medal_counts[medal_type] = 0
