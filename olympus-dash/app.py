@@ -6,7 +6,10 @@ import dash_bootstrap_components as dbc
 # Initialize the app - Use pages=True
 app = dash.Dash(__name__,
                 use_pages=True, # Enable Dash Pages feature
-                external_stylesheets=[dbc.themes.FLATLY], # Use FLATLY theme
+                external_stylesheets=[
+                    dbc.themes.FLATLY,
+                    '/assets/country_profile.css'  # Add our new CSS file
+                ],
                 suppress_callback_exceptions=True # Necessary if callbacks are in other files
                )
 app.title = "Olympus Insight"
