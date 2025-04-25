@@ -23,57 +23,184 @@ default_year = get_default_value(YEAR_OPTIONS_NO_ALL)
 # Define default season value (options will be dynamic)
 default_season = DEFAULT_DROPDOWN_LABEL
 
-layout = dbc.Container([
-    html.H3("Olympic Year Summary"),
-    html.Hr(),
-    # Row for Filters
-    dbc.Row([
-        # Year Dropdown Column
-        dbc.Col([
-            html.Label("Select Year:", className="fw-bold"),
-            dcc.Dropdown(
-                id='olympic-year-year-dropdown',
-                options=YEAR_OPTIONS_NO_ALL,
-                value=default_year,
-                clearable=False,
-            )
-        ], width=12, md=6, lg=4, className="mb-3 mb-md-0"),
+# Modern styling constants
+card_style = {
+    "backgroundColor": "#ffffff",
+    "border": "none",
+    "borderRadius": "12px",
+    "boxShadow": "0 4px 6px rgba(0,0,0,0.05)",
+    "transition": "all 0.3s ease",
+    "height": "100%",
+    "overflow": "hidden"
+}
 
-        # Season Dropdown Column (options will be set by callback)
+card_hover_style = {
+    "transform": "translateY(-5px)",
+    "boxShadow": "0 8px 15px rgba(0,0,0,0.1)"
+}
+
+# Dashboard container style
+dashboard_style = {
+    "width": "100%",
+    "overflowX": "hidden",
+    "paddingRight": "0px",
+    "paddingLeft": "0px"
+}
+
+layout = html.Div([
+    # --- Hero Section ---
+    dbc.Row([
         dbc.Col([
-            html.Label("Select Season:", className="fw-bold"),
-            dcc.Dropdown(
-                id='olympic-year-season-dropdown',
-                # options=[], # Options are now dynamic
-                value=default_season, # Default to "All"
-                clearable=False,
-                # placeholder="Select season..." # Optional placeholder
-            )
-        ], width=12, md=6, lg=4)
+            html.Div([
+                html.H1("Olympic Year Analysis", 
+                       className="display-3 fw-bold text-primary mb-4",
+                       style={"textShadow": "2px 2px 4px rgba(255,255,255,0.8)"}),
+                html.P("Explore detailed statistics and performance metrics for each Olympic year.", 
+                      className="lead mb-5",
+                      style={"fontSize": "1.4rem", "textShadow": "1px 1px 2px rgba(255,255,255,0.9)"})
+            ], className="text-center py-4")
+        ], width=12)
     ], className="mb-4"),
 
-    html.Hr(),
-    # Row for Images and Summary Card (Images added back)
-    dbc.Row([
-        # Column for Emblem Image
-        dbc.Col([
-            html.Div(html.Small("Emblem"), className="text-center text-muted"),
-            html.Img(id='olympic-emblem-img', src=PLACEHOLDER_IMAGE, style={'max-height': '100px', 'max-width': '100%', 'display': 'block', 'margin-left': 'auto', 'margin-right': 'auto'})
-        ], width=12, md=3, className="text-center mb-3"),
-        # Column for Summary Card
-        dbc.Col(id='olympic-year-summary-col', width=12, md=6),
-        # Column for Mascot Image
-        dbc.Col([
-            html.Div(html.Small("Mascot"), className="text-center text-muted"),
-            html.Img(id='olympic-mascot-img', src=PLACEHOLDER_IMAGE, style={'max-height': '100px', 'max-width': '100%', 'display': 'block', 'margin-left': 'auto', 'margin-right': 'auto'})
-        ], width=12, md=3, className="text-center mb-3"),
-    ], align="center", className="mb-4"),
+    # Main content container
+    html.Div([
+        # --- Description ---
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.P("Select a year and season to view comprehensive Olympic statistics, including medal tables, athlete participation, and event details.", 
+                              className="lead text-muted mb-0")
+                    ])
+                ], style=card_style)
+            ], width=12)
+        ], className="mb-4"),
 
-    # Placeholder Div for Medal Table and other visuals
-    dbc.Spinner(
-        html.Div(id='olympic-year-details')
-    )
-])
+        # --- Filters Section ---
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        dbc.Row([
+                            # Year Dropdown Column
+                            dbc.Col([
+                                html.Label("Select Year:", className="fw-bold mb-2"),
+                                dcc.Dropdown(
+                                    id='olympic-year-year-dropdown',
+                                    options=YEAR_OPTIONS_NO_ALL,
+                                    value=default_year,
+                                    clearable=False,
+                                    style={
+                                        'zIndex': '1000',
+                                        'position': 'relative'
+                                    }
+                                )
+                            ], width=12, md=6, lg=4, className="mb-3 mb-md-0"),
+
+                            # Season Dropdown Column
+                            dbc.Col([
+                                html.Label("Select Season:", className="fw-bold mb-2"),
+                                dcc.Dropdown(
+                                    id='olympic-year-season-dropdown',
+                                    value=None,
+                                    clearable=False,
+                                    style={
+                                        'zIndex': '1000',
+                                        'position': 'relative'
+                                    }
+                                )
+                            ], width=12, md=6, lg=4)
+                        ], justify="center", className="g-3")
+                    ], className="px-4 py-3")
+                ], style={**card_style, 'zIndex': '100'}, className="mb-4")
+            ], width=12)
+        ], className="mb-4"),
+
+        # --- Images and Summary Section ---
+        dbc.Row([
+            # Column for Emblem Image
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.Img(id='olympic-emblem-img', src=PLACEHOLDER_IMAGE, 
+                                className="img-fluid", 
+                                style={'max-height': '150px', 'display': 'block', 'margin': 'auto'})
+                    ], className="d-flex align-items-center justify-content-center")
+                ], style=card_style)
+            ], width=12, md=3, className="mb-3"),
+            
+            # Column for Summary Card
+            dbc.Col(id='olympic-year-summary-col', width=12, md=6, className="mb-3"),
+            
+            # Column for Mascot Image
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.Img(id='olympic-mascot-img', src=PLACEHOLDER_IMAGE, 
+                                className="img-fluid", 
+                                style={'max-height': '150px', 'display': 'block', 'margin': 'auto'})
+                    ], className="d-flex align-items-center justify-content-center")
+                ], style=card_style)
+            ], width=12, md=3, className="mb-3"),
+        ], className="mb-4"),
+
+        # --- Data Table Section ---
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        # Search and Page Size controls
+                        dbc.Row([
+                            # Column for Page Size Selector
+                            dbc.Col([
+                                dbc.Form([
+                                    dbc.RadioItems(
+                                        options=[
+                                            {"label": " 10 ", "value": 10},
+                                            {"label": " 25 ", "value": 25},
+                                            {"label": " 50 ", "value": 50},
+                                        ],
+                                        value=25,
+                                        id="medal-table-page-size-selector",
+                                        inline=True,
+                                        className="bg-light p-2 rounded"
+                                    ),
+                                ],
+                                id="page-size-selector-form-id",
+                                style={'display': 'none'}
+                                )
+                            ], width="auto"),
+
+                            # Column for Search Input
+                            dbc.Col([
+                                dbc.Input(
+                                    id="medal-table-search-input",
+                                    placeholder="Search Country...",
+                                    type="search",
+                                    size="sm",
+                                    className="border-primary"
+                                ),
+                            ],
+                            id="medal-table-search-form",
+                            style={'display': 'none', 'max-width': '300px'}
+                            )
+                        ], justify="between", align="center", className="mb-3"),
+
+                        # Spinner for the table
+                        dbc.Spinner(
+                            html.Div(id='olympic-year-details', 
+                                   style={'maxHeight': '600px', 'overflowY': 'auto'})
+                        ),
+                    ], className="p-4")
+                ], style=card_style)
+            ], width=12)
+        ]),
+
+    ], className="px-3"),
+
+    # Hidden stores
+    dcc.Store(id='medal-table-full-data-store'),
+], id='olympic-year-page-container')
 
 # -- NEW CALLBACK: Update Season Dropdown based on Year --
 @callback(
@@ -142,6 +269,10 @@ def get_image_path(image_type, city, year):
     Output('olympic-year-details', 'children'),
     Output('olympic-emblem-img', 'src'),
     Output('olympic-mascot-img', 'src'),
+    Output('page-size-selector-form-id', 'style'),
+    Output('medal-table-search-form', 'style'),
+    Output('medal-table-full-data-store', 'data'),
+    Output('olympic-year-page-container', 'style'),  # Add output for page background style
     Input('olympic-year-year-dropdown', 'value'),
     Input('olympic-year-season-dropdown', 'value')
 )
