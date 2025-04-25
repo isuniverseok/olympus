@@ -1,6 +1,6 @@
 # pages/country_profile.py
 import dash
-from dash import html, dcc, callback, Input, Output
+from dash import html, dcc, callback, Input, Output, State, clientside_callback, ClientsideFunction
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
@@ -8,6 +8,8 @@ from dash.exceptions import PreventUpdate
 # Updated import to use helpers from data_loader
 from data_loader import df, NOC_OPTIONS_NO_ALL, get_default_value
 import pandas as pd
+# NEW Import for Word Cloud
+from wordcloud import WordCloud
 
 dash.register_page(__name__, name='Country Profile')
 
@@ -236,30 +238,71 @@ custom_options = [
 # Use helper to get default value safely
 default_noc = get_default_value(NOC_OPTIONS_NO_ALL)
 
+# Modern card style with hover effects
+card_style = {
+    "backgroundColor": "#ffffff",
+    "border": "1px solid #e0e0e0",
+    "borderRadius": "10px",
+    "boxShadow": "0 2px 4px rgba(0,0,0,0.05)",
+    "transition": "all 0.3s ease",
+    "height": "100%"
+}
+
+card_hover_style = {
+    "transform": "translateY(-5px)",
+    "boxShadow": "0 4px 8px rgba(0,0,0,0.1)"
+}
+
+# Layout with modern design
 layout = dbc.Container([
-    html.H3("Country Performance Profile"),
-    html.Hr(),
+    # Hero Section with Country Selection
     dbc.Row([
         dbc.Col([
-            html.Label("Select Country:", className="fw-bold"),
-            dcc.Dropdown(
-                id='country-profile-noc-dropdown',
-                options=custom_options,
-                value=default_noc,
-                clearable=False,
-            )
-        ], width=12, md=6, lg=4)
-    ]),
-    html.Hr(),
-
-    # Visualization Area with Spinner
+            html.Div([
+                html.H1("Country Performance Profile", className="display-4 text-primary mb-4"),
+                html.P("Explore detailed Olympic performance metrics and statistics for countries across the globe.", 
+                      className="lead text-muted mb-5")
+            ], className="text-center hero-content")
+        ], width=12)
+    ], className="mb-4"),
+    
+    # Unified Country Selection and Header Section
+    dbc.Row([
+        dbc.Col([
+            dbc.Card([
+                dbc.CardBody([
+                    # Country Selection
+                    html.Div([
+                        html.H5("Select Country", className="text-primary mb-3"),
+                        dcc.Dropdown(
+                            id='country-profile-noc-dropdown',
+                            options=custom_options,
+                            value=default_noc,
+                            clearable=False,
+                            className="modern-dropdown mb-4"
+                        ),
+                    ], className="country-selector text-center"),
+                    
+                    # Country Info (only shown after selection)
+                    html.Div(id='country-header-section', className="country-info text-center")
+                ])
+            ], className="country-card")
+        ], width=12, lg=8, className="mx-auto")
+    ], className="mb-5"),
+    
+    # Main Content Area with Spinner
     dbc.Spinner(
-        html.Div(id='country-profile-visuals') # Content will be loaded here by callback
+        html.Div(id='country-profile-visuals'),
+        color="primary",
+        type="grow",
+        fullscreen=False,
+        spinner_style={"width": "3rem", "height": "3rem"}
     ),
     
-    # Hidden store to receive country from globe
-    dcc.Store(id='clicked-country', data=None, storage_type='session')
-])
+    # Hidden Stores
+    dcc.Store(id='clicked-country', data=None, storage_type='session'),
+    dcc.Input(id='top-n-sports-input', value=10, type='number', style={'display': 'none'})
+], fluid=True, className="px-4 py-3")
 
 # Callback to update dropdown when country is selected from globe
 @callback(
@@ -274,104 +317,323 @@ def update_dropdown_from_globe(country):
     print(f"Updating dropdown to: {country}")  # Debug print
     return country
 
-# Combined Callback for ALL country profile outputs
+# Update the main callback to trigger animation reset
 @callback(
-    Output('country-profile-visuals', 'children'), # Output to the Div container
-    Input('country-profile-noc-dropdown', 'value')
+    [Output('country-profile-visuals', 'children'),
+     Output('country-header-section', 'children'),
+     Output('country-profile-visuals', 'className')],  # Add className output
+    [Input('country-profile-noc-dropdown', 'value'),
+     Input('top-n-sports-input', 'value')]
 )
-def update_country_visuals(selected_noc):
+def update_country_visuals(selected_noc, n_sports):
     if not selected_noc:
-        raise PreventUpdate # Or return html.P("Please select a country.")
-
-    # Get country name and flag
-    country_name, country_flag = COUNTRY_MAPPING.get(selected_noc, (selected_noc, ''))
-
-    # Filter data for the selected country
-    country_df = df[df['NOC'] == selected_noc].copy()
-
-    if country_df.empty:
-        return html.Div([ # Return a list
-            html.H4(f"{country_name} {country_flag} ({selected_noc})"),
-            dbc.Alert(f"No data available for {country_name}.")
-        ])
-
-    # --- Calculations & Components --- 
-    # Filter for medals
-    medal_df = country_df[country_df['Medal'] != 'None'].copy()
-
-    # --- FIX: Deduplicate event medals for accurate team counts ---
-    if not medal_df.empty:
-        unique_event_medals_country = medal_df.drop_duplicates(
-            subset=['Year', 'Season', 'Event', 'Medal'] # Region/NOC not needed here
+        return (
+            dbc.Alert("Please select a country.", color="info", className="m-3"),
+            None,
+            "trigger-animation"
         )
-    else:
-        unique_event_medals_country = pd.DataFrame(columns=medal_df.columns) # Empty df if no medals
-    # --- END FIX ---
 
-    # --- Use deduplicated data for overall counts/trends --- 
-    # 1. Overall Medal Counts (Using unique_event_medals_country)
-    total_medals = len(unique_event_medals_country)
-    medal_counts = unique_event_medals_country['Medal'].value_counts().reindex(['Gold', 'Silver', 'Bronze'], fill_value=0)
+    try:
+        # Filter data for selected country
+        country_df = df[df['NOC'] == selected_noc].copy()
+        if country_df.empty:
+            return (
+                dbc.Alert(f"No data found for {selected_noc}.", color="warning", className="m-3"),
+                None,
+                "trigger-animation"
+            )
 
-    # 2. Medals Over Time (Using unique_event_medals_country)
-    medals_over_time = unique_event_medals_country.groupby(['Year', 'Season'])['Medal'].count().unstack(fill_value=0).reset_index()
-    fig_medals_time = go.Figure()
-    if 'Summer' in medals_over_time.columns:
-        fig_medals_time.add_trace(go.Scatter(x=medals_over_time['Year'], y=medals_over_time['Summer'], mode='lines+markers', name='Summer Medals'))
-    if 'Winter' in medals_over_time.columns:
-        fig_medals_time.add_trace(go.Scatter(x=medals_over_time['Year'], y=medals_over_time['Winter'], mode='lines+markers', name='Winter Medals'))
-    fig_medals_time.update_layout(title='Medal Trend Over Time',
-                                 xaxis_title='Year', yaxis_title='Medals Won',
-                                 hovermode="x unified", template='plotly_white')
-
-    # 3. Medals per Sport (Using unique_event_medals_country)
-    medals_by_sport = unique_event_medals_country['Sport'].value_counts().nlargest(15).reset_index()
-    medals_by_sport.columns=['Sport', 'Medal Count']
-    fig_sport_medals = px.bar(medals_by_sport, x='Sport', y='Medal Count',
-                              title='Top 15 Sports by Medals Won',
-                              template='plotly_white')
-    fig_sport_medals.update_layout(yaxis_title='Total Medals')
-
-    # --- Use original medal_df for athlete-specific stats --- 
-    # 4. Top Athletes (Using original medal_df)
-    top_athletes = medal_df['Name'].value_counts().nlargest(5).reset_index()
-    top_athletes.columns=['Athlete', 'Medal Count']
-    athlete_list_items = [dbc.ListGroupItem(f"{row['Athlete']} ({row['Medal Count']} medals)") for index, row in top_athletes.iterrows()]
-
-    # 5. First/Last Appearance & Medal (Using original country_df & unique_event_medals_country)
-    first_appearance = country_df['Year'].min()
-    last_appearance = country_df['Year'].max()
-    first_medal_year = unique_event_medals_country['Year'].min() if not unique_event_medals_country.empty else "N/A"
-    num_olympics = country_df['Games'].nunique()
-
-    # --- Assemble Layout --- 
-    layout_content = html.Div([
-        html.H4(f"{country_name} {country_flag} ({selected_noc})"),
-        html.Hr(),
-        dbc.Row([
-            dbc.Col(dbc.Card(dbc.CardBody([
-                html.H5("Overall Performance", className="card-title"),
-                html.P(f"Total Unique Medals: {total_medals}"),
-                dbc.Row([
-                    dbc.Col(f"🥇 Gold: {medal_counts.get('Gold', 0)}"),
-                    dbc.Col(f"🥈 Silver: {medal_counts.get('Silver', 0)}"),
-                    dbc.Col(f"🥉 Bronze: {medal_counts.get('Bronze', 0)}")
-                ], className="mb-2"),
-                html.P(f"Participated in {num_olympics} Olympics ({first_appearance} - {last_appearance})"),
-                html.P(f"First Medal Won: {first_medal_year}"),
-            ])), width=12, md=4, className="mb-3"),
-
-            dbc.Col(dbc.Card(dbc.CardBody([
-                html.H5("Top Athletes (Most Medals)", className="card-title"),
-                dbc.ListGroup(athlete_list_items, flush=True)
-            ])), width=12, md=4, className="mb-3"),
-            
-            dbc.Col(width=12, md=4, className="mb-3") # Placeholder or for future use
-        ]),
-        dbc.Row([
-            dbc.Col(dcc.Graph(figure=fig_medals_time), width=12, lg=6, className="mb-3"),
-            dbc.Col(dcc.Graph(figure=fig_sport_medals), width=12, lg=6, className="mb-3")
+        # Create header content
+        header_content = html.Div([
+            html.H3(f"Country Profile: {selected_noc}", className="text-primary"),
+            html.P(f"Analyzing Olympic performance from {country_df['Year'].min()} to {country_df['Year'].max()}", 
+                  className="text-muted")
         ])
-    ])
 
-    return layout_content
+        # Handle case where country has no medals
+        if country_df[country_df['Medal'] != 'None'].empty:
+            first_appearance = country_df['Year'].min()
+            last_appearance = country_df['Year'].max()
+            num_olympics = country_df['Games'].nunique()
+            layout_no_medals = html.Div([
+                # No Medals Alert with modern styling
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Alert([
+                            html.H4("No Medals Won", className="alert-heading"),
+                            html.P("This country has participated in the Olympics but has not won any medals yet.", className="mb-0")
+                        ], color="info", className="shadow-sm")
+                    ], width=12, className="mb-4")
+                ]),
+                
+                # Participation Summary Card
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Card([
+                            dbc.CardBody([
+                                html.H5("Participation Summary", className="card-title text-primary"),
+                                html.Div([
+                                    html.P([
+                                        html.I(className="bi bi-calendar-event me-2"),
+                                        f"Participated in {num_olympics} Olympics"
+                                    ], className="mb-2"),
+                                    html.P([
+                                        html.I(className="bi bi-clock-history me-2"),
+                                        f"First Appearance: {first_appearance}"
+                                    ], className="mb-2"),
+                                    html.P([
+                                        html.I(className="bi bi-clock me-2"),
+                                        f"Last Appearance: {last_appearance}"
+                                    ])
+                                ])
+                            ])
+                        ], className="performance-card animate-slide")
+                    ], width=12)
+                ])
+            ])
+            return layout_no_medals, header_content, "trigger-animation"
+
+        # --- Calculations & Components ---
+        medal_df = country_df[country_df['Medal'] != 'None'].copy()
+
+        unique_event_medals_country = pd.DataFrame()
+        if not medal_df.empty:
+            unique_event_medals_country = medal_df.drop_duplicates(
+                subset=['Year', 'Season', 'Event', 'Medal']
+            )
+
+        # --- Medal & Participation Calculations --- 
+        total_medals = len(unique_event_medals_country)
+        medal_counts = unique_event_medals_country['Medal'].value_counts().reindex(['Gold', 'Silver', 'Bronze'], fill_value=0) if not unique_event_medals_country.empty else pd.Series(0, index=['Gold', 'Silver', 'Bronze'])
+
+        # --- Create Modern Layout ---
+        layout_content = html.Div([
+            # Overall Performance Cards
+            dbc.Row([
+                # Total Medals Card
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardBody([
+                            html.H5("Total Medals", className="card-title text-primary"),
+                            html.H2(f"{total_medals}", className="display-4 text-center mb-3"),
+                            dbc.Row([
+                                dbc.Col([
+                                    html.Div([
+                                        html.Span("🥇", className="h3"),
+                                        html.H4(f"{medal_counts.get('Gold', 0)}", className="mb-0")
+                                    ], className="text-center")
+                                ], width=4),
+                                dbc.Col([
+                                    html.Div([
+                                        html.Span("🥈", className="h3"),
+                                        html.H4(f"{medal_counts.get('Silver', 0)}", className="mb-0")
+                                    ], className="text-center")
+                                ], width=4),
+                                dbc.Col([
+                                    html.Div([
+                                        html.Span("🥉", className="h3"),
+                                        html.H4(f"{medal_counts.get('Bronze', 0)}", className="mb-0")
+                                    ], className="text-center")
+                                ], width=4)
+                            ])
+                        ])
+                    ], className="performance-card animate-slide", style=card_style)
+                ], width=12, md=4, className="mb-4"),
+                
+                # Participation Card
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardBody([
+                            html.H5("Olympic Participation", className="card-title text-primary"),
+                            html.Div([
+                                html.P([
+                                    html.I(className="bi bi-calendar-event me-2"),
+                                    f"Participated in {country_df['Games'].nunique()} Olympics"
+                                ], className="mb-2"),
+                                html.P([
+                                    html.I(className="bi bi-clock-history me-2"),
+                                    f"First Appearance: {country_df['Year'].min()}"
+                                ], className="mb-2"),
+                                html.P([
+                                    html.I(className="bi bi-trophy me-2"),
+                                    f"First Medal: {unique_event_medals_country['Year'].min() if not unique_event_medals_country.empty else 'N/A'}"
+                                ])
+                            ])
+                        ])
+                    ], className="performance-card animate-slide", style=card_style)
+                ], width=12, md=4, className="mb-4"),
+                
+                # Top Athletes Card
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardBody([
+                            html.H5("Top Athletes", className="card-title text-primary"),
+                            dbc.ListGroup([
+                                dbc.ListGroupItem(f"{row['Athlete']} ({row['Medal Count']} medals)", className="border-0")
+                                for index, row in medal_df['Name'].value_counts().nlargest(5).reset_index().rename(columns={'Name': 'Athlete', 'count': 'Medal Count'}).iterrows()
+                            ], flush=True)
+                        ])
+                    ], className="performance-card animate-slide", style=card_style)
+                ], width=12, md=4, className="mb-4")
+            ]),
+            
+            # Charts Section
+            dbc.Row([
+                # Medals Over Time Chart
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader("Medal Types Won Over Time", className="bg-primary text-white"),
+                        dbc.CardBody([
+                            dcc.Graph(
+                                figure=px.bar(
+                                    unique_event_medals_country.groupby(['Year', 'Medal']).size().reset_index(name='Count'),
+                                    x='Year',
+                                    y='Count',
+                                    color='Medal',
+                                    title=None,
+                                    color_discrete_map={'Gold': '#FFD700', 'Silver': '#C0C0C0', 'Bronze': '#CD7F32'},
+                                    template='plotly_white'
+                                ).update_layout(
+                                    xaxis_title='Year',
+                                    yaxis_title='Medals Won',
+                                    showlegend=True,
+                                    legend_title='Medal Type'
+                                ),
+                                config={'displayModeBar': False}
+                            )
+                        ])
+                    ], className="chart-card animate-slide", style=card_style)
+                ], width=12, className="mb-4")
+            ]),
+            
+            # Participation and Efficiency Charts
+            dbc.Row([
+                # Gender Participation Chart
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader("Athlete Participation by Gender", className="bg-primary text-white"),
+                        dbc.CardBody([
+                            dcc.Graph(
+                                figure=px.line(
+                                    country_df.drop_duplicates(subset=['Year', 'Name']).groupby(['Year', 'Gender']).size().reset_index(name='Participants'),
+                                    x='Year',
+                                    y='Participants',
+                                    color='Gender',
+                                    markers=True,
+                                    template='plotly_white'
+                                ).update_layout(
+                                    xaxis_title='Year',
+                                    yaxis_title='Number of Athletes',
+                                    showlegend=True,
+                                    legend_title='Gender'
+                                ),
+                                config={'displayModeBar': False}
+                            )
+                        ])
+                    ], className="chart-card animate-slide", style=card_style)
+                ], width=12, md=6, className="mb-4"),
+                
+                # Medal Efficiency Chart
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader("Medal Efficiency Over Time", className="bg-primary text-white"),
+                        dbc.CardBody([
+                            dcc.Graph(
+                                figure=px.line(
+                                    pd.merge(
+                                        country_df.drop_duplicates(subset=['Year', 'Name']).groupby('Year').size().reset_index(name='Athletes'),
+                                        unique_event_medals_country.groupby('Year').size().reset_index(name='Medals'),
+                                        on='Year',
+                                        how='left'
+                                    ).fillna(0).assign(
+                                        Efficiency=lambda x: x['Medals'] / x['Athletes']
+                                    ),
+                                    x='Year',
+                                    y='Efficiency',
+                                    markers=True,
+                                    template='plotly_white'
+                                ).update_layout(
+                                    xaxis_title='Year',
+                                    yaxis_title='Medals per Athlete',
+                                    yaxis_tickformat='.2f'
+                                ),
+                                config={'displayModeBar': False}
+                            )
+                        ])
+                    ], className="chart-card animate-slide", style=card_style)
+                ], width=12, md=6, className="mb-4")
+            ]),
+            
+            # Sports Analysis Section
+            dbc.Row([
+                # Top Sports Table
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader([
+                            html.Div([
+                                html.H5(f"Top {n_sports} Sports by Medals", className="d-inline-block mb-0"),
+                                dcc.Input(
+                                    id='top-n-sports-input',
+                                    type='number',
+                                    value=n_sports,
+                                    min=3,
+                                    max=30,
+                                    step=1,
+                                    style={'width': '80px', 'marginLeft': '10px'},
+                                    debounce=True
+                                )
+                            ], className="d-flex align-items-center")
+                        ], className="bg-primary text-white"),
+                        dbc.CardBody([
+                            dbc.Table.from_dataframe(
+                                unique_event_medals_country['Sport'].value_counts().nlargest(n_sports).reset_index().rename(columns={'Sport': 'Sport', 'count': 'Medal Count'}),
+                                striped=True,
+                                bordered=True,
+                                hover=True,
+                                responsive=True,
+                                className="table-sm"
+                            )
+                        ])
+                    ], className="analysis-card animate-slide", style=card_style)
+                ], width=12, lg=6, className="mb-4"),
+                
+                # Sports Word Cloud
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader("Top Sports Word Cloud", className="bg-primary text-white"),
+                        dbc.CardBody([
+                            dcc.Graph(
+                                figure=px.imshow(
+                                    WordCloud(
+                                        width=800,
+                                        height=400,
+                                        background_color='white',
+                                        colormap='viridis'
+                                    ).generate_from_frequencies(
+                                        unique_event_medals_country['Sport'].value_counts().nlargest(20).to_dict()
+                                    ).to_array(),
+                                    title=None
+                                ).update_layout(
+                                    xaxis=dict(showgrid=False, showticklabels=False, zeroline=False),
+                                    yaxis=dict(showgrid=False, showticklabels=False, zeroline=False),
+                                    plot_bgcolor='rgba(0,0,0,0)',
+                                    paper_bgcolor='rgba(0,0,0,0)',
+                                    margin=dict(l=0, r=0, t=0, b=0)
+                                ),
+                                config={'displayModeBar': False}
+                            )
+                        ])
+                    ], className="analysis-card animate-slide", style=card_style)
+                ], width=12, lg=6, className="mb-4")
+            ])
+        ])
+
+        return layout_content, header_content, "trigger-animation"
+
+    except Exception as e:
+        print(f"Error in country profile callback: {str(e)}")
+        return (
+            dbc.Alert(f"An error occurred while processing the data: {str(e)}", color="danger", className="m-3"),
+            None,
+            "trigger-animation"
+        )

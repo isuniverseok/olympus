@@ -45,11 +45,27 @@ def get_medal_counts():
 
 # Create the layout
 layout = dbc.Container([
-    html.H3("Global Olympic Medal Efficiency", className="mb-4"),
-    html.P("Interact with the 3D globe to explore Olympic medal efficiency across countries. Click on a country to view its detailed profile.", 
-           className="text-muted"),
-    html.P("Medal Efficiency = Total Points / Total Athletes (Gold=4, Silver=2, Bronze=1)", 
-           className="text-muted small"),
+    # --- Hero Section ---
+    dbc.Row([
+        dbc.Col([
+            html.Div([
+                html.H1("Global Olympic Analysis", className="display-4 text-primary mb-4"),
+                html.P("Explore Olympic performance across the globe with our interactive 3D visualization.", 
+                      className="lead text-muted mb-5")
+            ], className="text-center hero-content")
+        ], width=12)
+    ], className="mb-4"),
+
+    # --- Description ---
+    dbc.Row([
+        dbc.Col([
+            html.P("Interact with the 3D globe to explore Olympic medal efficiency across countries. Click on a country to view its detailed profile.", 
+                  className="lead text-muted mb-2"),
+            html.P("Medal Efficiency = Total Points / Total Athletes (Gold=4, Silver=2, Bronze=1)", 
+                  className="text-muted small mb-4")
+        ], width=12)
+    ]),
+    
     dbc.Row([
         dbc.Col([
             dcc.Graph(

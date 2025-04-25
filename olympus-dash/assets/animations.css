@@ -1,0 +1,121 @@
+/* Animation Effects */
+@keyframes slideInFromLeft {
+    0% {
+        transform: translateX(-50px);
+        opacity: 0;
+    }
+    20% {
+        transform: translateX(-40px);
+        opacity: 0.2;
+    }
+    40% {
+        transform: translateX(-30px);
+        opacity: 0.4;
+    }
+    60% {
+        transform: translateX(-20px);
+        opacity: 0.6;
+    }
+    80% {
+        transform: translateX(-10px);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Base card styles */
+.card {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center left;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.card:hover {
+    transform: translateX(5px) scale(1.01);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+/* Animation classes */
+.animate-ready {
+    opacity: 0 !important;
+    transform: translateX(-50px) !important;
+    transition: none !important;
+    pointer-events: none;
+    will-change: transform, opacity;
+}
+
+.animate-slide {
+    animation: slideInFromLeft 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    pointer-events: auto;
+    will-change: transform, opacity;
+}
+
+/* Performance Cards */
+.performance-card.animate-slide { animation-delay: 0.1s; }
+.performance-card.animate-slide:nth-child(2) { animation-delay: 0.2s; }
+.performance-card.animate-slide:nth-child(3) { animation-delay: 0.3s; }
+
+/* Chart Cards */
+.chart-card.animate-slide { animation-delay: 0.2s; }
+.chart-card.animate-slide:nth-child(2) { animation-delay: 0.3s; }
+
+/* Analysis Cards */
+.analysis-card.animate-slide { animation-delay: 0.3s; }
+.analysis-card.animate-slide:nth-child(2) { animation-delay: 0.4s; }
+
+/* Reset animation class */
+.no-animation {
+    animation: none !important;
+}
+
+/* Graph container transitions */
+.js-plotly-plot {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+}
+
+.js-plotly-plot.animate-ready {
+    opacity: 0 !important;
+    transform: translateX(-50px) !important;
+    transition: none !important;
+}
+
+.js-plotly-plot.animate-slide {
+    animation: slideInFromLeft 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Ensure smooth transitions for all interactive elements */
+.country-info, .alert, .table {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, opacity;
+}
+
+/* Container spacing for better scroll experience */
+.container {
+    scroll-behavior: smooth;
+}
+
+/* Optimize performance */
+.performance-card, .chart-card, .analysis-card {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transform: translateZ(0);
+    perspective: 1000px;
+}
+
+/* Add hardware acceleration hints */
+.animate-slide, .animate-ready {
+    transform: translateZ(0);
+    perspective: 1000px;
+    backface-visibility: hidden;
+} 

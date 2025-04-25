@@ -212,8 +212,24 @@ def test_medal_counting(noc='USA', season='Summer'):
 
 # Create the layout
 layout = dbc.Container([
-    html.H3("Olympic Performance Prediction"),
-    html.Hr(),
+    # --- Hero Section ---
+    dbc.Row([
+        dbc.Col([
+            html.Div([
+                html.H1("Olympic Performance Prediction", className="display-4 text-primary mb-4"),
+                html.P("Predict future Olympic performance using machine learning and historical data analysis.", 
+                      className="lead text-muted mb-5")
+            ], className="text-center hero-content")
+        ], width=12)
+    ], className="mb-4"),
+
+    # --- Description ---
+    dbc.Row([
+        dbc.Col([
+            html.P("Use our advanced prediction models to forecast medal counts and identify potential breakout sports for selected countries.", 
+                  className="lead text-muted mb-4")
+        ], width=12)
+    ]),
     
     # Country and Season Selection
     dbc.Row([
@@ -350,7 +366,7 @@ def update_predictions(selected_noc, selected_season):
                 *[html.P(f"{row['Year']}: {row['Predicted_Medals']} medals") 
                   for _, row in future_predictions.iterrows()]
             ])
-        ], className="mb-3"),
+        ], className="performance-card animate-slide mb-3"),
         
         dbc.Card([
             dbc.CardHeader(f"{selected_season} Olympics Breakout Sports Analysis"),
@@ -359,17 +375,17 @@ def update_predictions(selected_noc, selected_season):
                 *[html.P(f"{row['Sport']}: {row['Growth_Rate']:.1f}% growth ({row['Total_Medals']} total medals)") 
                   for _, row in breakout_sports.iterrows()]
             ])
-        ], className="mb-3")
+        ], className="analysis-card animate-slide mb-3")
     ]
     
     return dbc.Row([
         dbc.Col([
             html.H4(f"{selected_season} Olympics Medal Predictions", className="mb-3"),
-            dcc.Graph(figure=historical_fig),
+            dcc.Graph(figure=historical_fig, className="chart-card animate-slide"),
             html.H4("Feature Importance", className="mb-3"),
-            dcc.Graph(figure=importance_fig),
+            dcc.Graph(figure=importance_fig, className="chart-card animate-slide"),
             html.H4(f"{selected_season} Olympics Breakout Sports", className="mb-3"),
-            dcc.Graph(figure=breakout_fig)
+            dcc.Graph(figure=breakout_fig, className="chart-card animate-slide")
         ], width=12, lg=8),
         dbc.Col([
             html.H4(f"{selected_season} Olympics Analysis Summary", className="mb-3"),
