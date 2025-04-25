@@ -19,7 +19,7 @@ import re
 from plotly.subplots import make_subplots
 
 # Register the page
-dash.register_page(__name__, name='Advanced Insights')
+dash.register_page(__name__, name='More Analysis')
 
 # Make sure we have data
 try:
@@ -686,161 +686,137 @@ def create_gender_participation_chart(filtered_df):
         )
         return fig
 
-# Main layout
-layout = html.Div([
-    dbc.Container([
-        # --- Hero Section ---
-        dbc.Row([
-            dbc.Col([
-                html.Div([
-                    html.H1("Advanced Olympic Analytics", className="display-4 text-primary mb-4"),
-                    html.P("Explore deeper patterns and insights with these advanced, interactive visualizations.", 
-                          className="lead text-muted mb-5")
-                ], className="text-center hero-content")
-            ], width=12)
-        ], className="mb-4"),
-
-        # --- Description ---
-        dbc.Row([
-            dbc.Col([
-                dbc.Alert([
-                    html.H4("Interactive Visualizations", className="alert-heading"),
-                    html.P("Use the filters below to customize your analysis and discover hidden trends in Olympic data."),
-                    html.Hr(),
-                    html.P("Compare physical characteristics, analyze gender participation, and explore medal trends across different sports and countries.")
-                ], color="info", className="mb-4"),
-            ], width=12)
-        ]),
-        
-        # Interactive filters
-        dbc.Row([
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardHeader(html.H5("Analysis Controls")),
-                    dbc.CardBody([
-                        html.Label("Olympic Years Range:"),
-                        # Define the slider inside the layout - using native Python types
-                        dcc.RangeSlider(
-                            id='year-range-slider',
-                            min=min_year,
-                            max=max_year,
-                            step=4,
-                            marks={int(year): str(year) for year in years if year % 20 == 0},
-                            value=[min_year, max_year],
-                            tooltip={"placement": "bottom", "always_visible": True}
-                        ),
-                        html.Div(className="mt-3"),
-                        
-                        html.Label("Season:"),
-                        dbc.RadioItems(
-                            id='season-toggle',
-                            options=[
-                                {'label': 'All', 'value': 'all'},
-                                {'label': 'Summer', 'value': 'Summer'},
-                                {'label': 'Winter', 'value': 'Winter'}
-                            ],
-                            value='all',
-                            inline=True,
-                            className="mb-3"
-                        ),
-                        
-                        html.Div([
-                            dbc.Button("Update Visualizations", id="update-button", color="primary", className="mt-3"),
-                            html.Span(id="filter-summary", className="ms-3 text-muted")
-                        ])
-                    ])
-                ], className="analysis-card animate-slide")
-            ], width=12)
-        ]),
-        
-        # Visualization Row 1 - Medal Trends
-        dbc.Row([
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardHeader(html.H5("Medal Trends for Top Countries")),
-                    dbc.CardBody([
-                        dcc.Graph(id='medal-trend-chart')
-                    ])
-                ], className="chart-card animate-slide mb-4")
-            ], width=12)
-        ]),
-        
-        # Visualization Row 2 - Athlete Age Evolution and Sport Characteristics
-        dbc.Row([
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardHeader(html.H5("Athlete Age Evolution")),
-                    dbc.CardBody([
-                        dcc.Graph(id='age-evolution-chart')
-                    ])
-                ], className="chart-card animate-slide mb-4")
-            ], width=6),
-            
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardHeader(html.H5("Sport-Attribute Heatmap")),
-                    dbc.CardBody([
-                        dcc.Graph(id='sport-heatmap')
-                    ])
-                ], className="chart-card animate-slide mb-4")
-            ], width=6)
-        ]),
-        
-        # Visualization Row 3 - Gender Participation and Sport Characteristics
-        dbc.Row([
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardHeader(html.H5("Gender Participation Over Time")),
-                    dbc.CardBody([
-                        dcc.Graph(id='gender-participation-chart')
-                    ])
-                ], className="chart-card animate-slide mb-4")
-            ], width=12)
-        ]),
-        
-        # Sport Characteristics Visualizations - Radar & 3D Scatter
-        dbc.Row([
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardHeader([
-                        html.H5("Sport Characteristics Analysis"),
-                        html.Div([
-                            html.Label("Select Sport:", className="mt-2 mb-1"),
-                            dcc.Dropdown(
-                                id='sport-characteristics-dropdown',
-                                options=[{'label': sport, 'value': sport} for sport in sports_list],
-                                value='Swimming',
-                                placeholder="Select a sport to analyze",
-                                clearable=False
-                            )
-                        ], className="mt-2")
-                    ], className="mb-0"),
-                    
-                    # Split the visualizations into tabs
-                    dbc.CardBody([
-                        dbc.Alert(
-                            "Compare the selected sport's physical characteristics with Olympic average, and analyze medal performance across time.",
-                            color="info", 
-                            className="mb-3"
-                        ),
-                        dbc.Tabs([
-                            dbc.Tab([
-                                dcc.Graph(id='sport-radar-chart', style={'height': '600px'})
-                            ], label="Physical Comparison"),
-                            dbc.Tab([
-                                dcc.Graph(id='sport-3d-scatter', style={'height': '600px'})
-                            ], label="Medal History")
-                        ])
-                    ])
-                ], className="analysis-card animate-slide mb-4")
-            ], width=12)
+# Layout definition
+layout = dbc.Container([
+    dbc.Row([
+        dbc.Col([
+            html.H2("Advanced Olympic Analysis", className="text-primary mb-4"),
+            html.P("Explore deeper insights and patterns in Olympic data through advanced visualizations and analysis.",
+                   className="lead mb-4"),
         ])
-        
-    ], fluid=True, className="mt-4"),
+    ]),
     
-    # Hidden div for page initialization
-    html.Div(id='page-load-trigger')
-])
+    # Filters Section
+    dbc.Card([
+        dbc.CardBody([
+            dbc.Row([
+                dbc.Col([
+                    html.Label("Year Range"),
+                    dcc.RangeSlider(
+                        id='year-range-slider',
+                        min=min_year,
+                        max=max_year,
+                        step=2,
+                        value=[min_year, max_year],
+                        marks={str(year): str(year) for year in 
+                               range(min_year, max_year + 1, 20)},
+                        className="mb-4"
+                    ),
+                ], width=12, lg=6),
+                
+                dbc.Col([
+                    html.Label("Season"),
+                    dbc.Checklist(
+                        id='season-toggle',
+                        options=[{'label': season, 'value': season} 
+                                for season in seasons],
+                        value=seasons,
+                        inline=True,
+                        className="mb-4"
+                    ),
+                ], width=12, lg=3),
+                
+                dbc.Col([
+                    html.Label("Sport"),
+                    dcc.Dropdown(
+                        id='sport-characteristics-dropdown',
+                        options=[{'label': sport, 'value': sport} 
+                                for sport in sports_list],
+                        value=None,
+                        placeholder="Select a sport for detailed analysis",
+                        className="mb-4"
+                    ),
+                ], width=12, lg=3),
+            ]),
+            
+            dbc.Row([
+                dbc.Col([
+                    dbc.Button(
+                        "Update Analysis",
+                        id="update-button",
+                        color="primary",
+                        className="w-100"
+                    ),
+                ], width=12),
+            ]),
+        ])
+    ], className="mb-4 shadow-sm"),
+    
+    # Analysis Summary
+    dbc.Row([
+        dbc.Col([
+            html.Div(id="filter-summary", className="text-muted mb-4")
+        ])
+    ]),
+    
+    # Main Analysis Section
+    dbc.Tabs([
+        # Medal Analysis Tab
+        dbc.Tab([
+            dbc.Row([
+                dbc.Col([
+                    dcc.Graph(id='medal-trend-chart')
+                ], width=12),
+            ], className="mb-4"),
+        ], label="Medal Trends"),
+        
+        # Physical Characteristics Tab
+        dbc.Tab([
+            dbc.Row([
+                dbc.Col([
+                    dcc.Graph(id='sport-heatmap')
+                ], width=12, lg=6),
+                dbc.Col([
+                    dcc.Graph(id='sport-3d-scatter')
+                ], width=12, lg=6),
+            ], className="mb-4"),
+        ], label="Physical Characteristics"),
+        
+        # Age Analysis Tab
+        dbc.Tab([
+            dbc.Row([
+                dbc.Col([
+                    dcc.Graph(id='age-evolution-chart')
+                ], width=12),
+            ], className="mb-4"),
+        ], label="Age Analysis"),
+        
+        # Gender Analysis Tab
+        dbc.Tab([
+            dbc.Row([
+                dbc.Col([
+                    dcc.Graph(id='gender-participation-chart')
+                ], width=12),
+            ], className="mb-4"),
+        ], label="Gender Analysis"),
+        
+        # Sport Deep Dive Tab
+        dbc.Tab([
+            dbc.Row([
+                dbc.Col([
+                    dcc.Graph(id='sport-radar-chart')
+                ], width=12, lg=6),
+                dbc.Col([
+                    html.Div(id='sport-stats-card', className="h-100")
+                ], width=12, lg=6),
+            ], className="mb-4"),
+        ], label="Sport Deep Dive"),
+    ], className="mb-4"),
+    
+    # Hidden div for page load trigger
+    html.Div(id='page-load-trigger'),
+    
+], fluid=True, className="py-4")
 
 @callback(
     [Output('medal-trend-chart', 'figure'),
@@ -868,13 +844,13 @@ def update_all_visualizations(n_clicks, year_range, season):
             filtered_df = filtered_df[(filtered_df['Year'] >= year_range[0]) & 
                                     (filtered_df['Year'] <= year_range[1])]
         
-        # Season filter
-        if season and season != 'all':
-            filtered_df = filtered_df[filtered_df['Season'] == season]
+        # Season filter - handle list of selected seasons
+        if season and len(season) > 0:
+            filtered_df = filtered_df[filtered_df['Season'].isin(season)]
         
         # Create filter summary text
         year_text = f"{year_range[0]}-{year_range[1]}" if year_range else "All years"
-        season_text = season if season and season != 'all' else "All seasons"
+        season_text = ", ".join(season) if season and len(season) > 0 else "All seasons"
         filter_summary = f"Showing: {year_text}, {season_text}"
         
         # Generate all visualizations
@@ -914,9 +890,9 @@ def update_sport_characteristics(n_clicks, selected_sport, year_range, season):
             filtered_df = filtered_df[(filtered_df['Year'] >= year_range[0]) & 
                                     (filtered_df['Year'] <= year_range[1])]
         
-        # Season filter
-        if season and season != 'all':
-            filtered_df = filtered_df[filtered_df['Season'] == season]
+        # Season filter - handle list of selected seasons
+        if season and len(season) > 0:
+            filtered_df = filtered_df[filtered_df['Season'].isin(season)]
         
         # Generate characteristics charts with selected sport
         radar_fig, scatter_3d_fig = create_sport_characteristics(filtered_df, selected_sport)
