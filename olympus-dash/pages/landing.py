@@ -17,6 +17,17 @@ def create_stat_card(title, value, className=""):
 
 # Define Layout
 layout = dbc.Container([
+    # --- Hero Section ---
+    dbc.Row([
+        dbc.Col([
+            html.Div([
+                html.H1("Olympus Insight", className="display-4 text-primary mb-4"),
+                html.P("Explore the rich history of the Olympic Games through interactive visualizations and detailed analyses.", 
+                      className="lead text-muted mb-5")
+            ], className="text-center hero-content")
+        ], width=12)
+    ], className="mb-4"),
+
     # --- NEW: Olympic Logo Row ---
     dbc.Row([
         dbc.Col(
@@ -57,7 +68,7 @@ layout = dbc.Container([
                      type="default",
                      children=dcc.Graph(id='athlete-trend-chart', figure={})
                  ))
-            ]),
+            ], className="chart-card animate-slide"),
             width=12, md=6, # Full width on small, half on medium+
             className="mb-4 mb-md-0" # Margin bottom on small, none on medium+
         ),
@@ -69,7 +80,7 @@ layout = dbc.Container([
                      type="default",
                      children=dcc.Graph(id='country-trend-chart', figure={})
                  ))
-            ]),
+            ], className="chart-card animate-slide"),
             width=12, md=6 # Full width on small, half on medium+
         )
     ], className="mb-4"),
@@ -106,7 +117,7 @@ layout = dbc.Container([
                     ], style={'list-style-type': 'none', 'padding-left': 0}),
                     html.P("More analysis options are available in the main navigation bar.", className="mt-3")
                 ])
-            ]),
+            ], className="analysis-card animate-slide"),
             width=6 # Takes half the width
         ),
         # Dataset Summary Card
@@ -117,7 +128,7 @@ layout = dbc.Container([
                      html.P(f"Years Covered: {FILTER_OPTIONS.get('years', [None])[-1]} - {FILTER_OPTIONS.get('years', [None])[0]}" if FILTER_OPTIONS.get('years') else "N/A"),
                      html.P("Detailed analysis available via navigation.") # Added placeholder text
                  ])
-             ]),
+             ], className="analysis-card animate-slide"),
              width=6 # Takes half the width
         )
     ])

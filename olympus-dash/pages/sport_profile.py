@@ -155,6 +155,17 @@ def layout(sport_name=None):
     olympic_colors = ["primary", "warning", "info", "success", "danger"]
 
     return dbc.Container(id='sport-profile-container', className=container_class, fluid=True, children=[
+        # --- Hero Section ---
+        dbc.Row([
+            dbc.Col([
+                html.Div([
+                    html.H1("Sport Performance Profile", className="display-4 text-primary mb-4"),
+                    html.P("Analyze detailed statistics, trends, and notable achievements for Olympic sports.", 
+                          className="lead text-muted mb-5")
+                ], className="text-center hero-content")
+            ], width=12)
+        ], className="mb-4"),
+
         # --- Title Row (No Theme Toggle) ---
         dbc.Row([
             dbc.Col(html.H3("Sport Performance Profile", className="text-primary d-inline-block me-3"), width='auto'),
@@ -196,8 +207,8 @@ def layout(sport_name=None):
         dbc.Spinner(html.Div([
             dbc.Row([
                 # Use explicit header IDs for callback targeting
-                dbc.Col(dbc.Card(children=[dbc.CardHeader("Current Selection", id="key-metrics-header", style=card_header_style, className=f"fw-bold text-{olympic_colors[0]}"), dbc.CardBody(id="key-metrics-content")], style=card_style, className="h-100"), width=12, lg=4, className="mb-4"),
-                dbc.Col(dbc.Card(children=[dbc.CardHeader("Top Athletes by Medal Count", id="top-athletes-header", style=card_header_style, className=f"fw-bold text-{olympic_colors[1]}"), dbc.CardBody(id="top-athletes-graph-content", style=plot_card_body_style)], style=card_style, className="h-100"), width=12, lg=8, className="mb-4"),
+                dbc.Col(dbc.Card(children=[dbc.CardHeader("Current Selection", id="key-metrics-header", style=card_header_style, className=f"fw-bold text-{olympic_colors[0]}"), dbc.CardBody(id="key-metrics-content")], style=card_style, className="h-100 performance-card animate-slide"), width=12, lg=4, className="mb-4"),
+                dbc.Col(dbc.Card(children=[dbc.CardHeader("Top Athletes by Medal Count", id="top-athletes-header", style=card_header_style, className=f"fw-bold text-{olympic_colors[1]}"), dbc.CardBody(id="top-athletes-graph-content", style=plot_card_body_style)], style=card_style, className="h-100 chart-card animate-slide"), width=12, lg=8, className="mb-4"),
             ], className="align-items-stretch g-4"),
             dbc.Row([
                 dbc.Col(dbc.Card(children=[
@@ -206,13 +217,13 @@ def layout(sport_name=None):
                         dcc.Dropdown(id={'type': 'dynamic-medal-filter', 'index': 0}, options=[{'label': DEFAULT_COUNTRY_LABEL, 'value': DEFAULT_COUNTRY_LABEL}], value=DEFAULT_COUNTRY_LABEL, placeholder="Filter by Country...", clearable=False, className="mb-3"),
                         html.Div(id='medal-breakdown-graph-content')
                     ], style=plot_card_body_style)
-                ], style=card_style, className="h-100"), width=12, lg=4, className="mb-4"),
-                dbc.Col(dbc.Card(children=[dbc.CardHeader("Gender Distribution", id="gender-header", style=card_header_style, className=f"fw-bold text-{olympic_colors[3]}"), dbc.CardBody(id="gender-graph-content", style=plot_card_body_style)], style=card_style, className="h-100"), width=12, lg=4, className="mb-4"),
-                dbc.Col(dbc.Card(children=[dbc.CardHeader("Age Distribution", id="age-header", style=card_header_style, className=f"fw-bold text-{olympic_colors[4]}"), dbc.CardBody(id="age-graph-content", style=plot_card_body_style)], style=card_style, className="h-100"), width=12, lg=4, className="mb-4"),
+                ], style=card_style, className="h-100 chart-card animate-slide"), width=12, lg=4, className="mb-4"),
+                dbc.Col(dbc.Card(children=[dbc.CardHeader("Gender Distribution", id="gender-header", style=card_header_style, className=f"fw-bold text-{olympic_colors[3]}"), dbc.CardBody(id="gender-graph-content", style=plot_card_body_style)], style=card_style, className="h-100 chart-card animate-slide"), width=12, lg=4, className="mb-4"),
+                dbc.Col(dbc.Card(children=[dbc.CardHeader("Age Distribution", id="age-header", style=card_header_style, className=f"fw-bold text-{olympic_colors[4]}"), dbc.CardBody(id="age-graph-content", style=plot_card_body_style)], style=card_style, className="h-100 chart-card animate-slide"), width=12, lg=4, className="mb-4"),
             ], className="align-items-stretch g-4"),
             dbc.Row([
-                dbc.Col(dbc.Card(children=[dbc.CardHeader("Top Countries by Medal Count", id="top-countries-header", style=card_header_style, className=f"fw-bold text-{olympic_colors[0]}"), dbc.CardBody(id="top-countries-graph-content", style=plot_card_body_style)], style=card_style, className="h-100"), width=12, md=6, className="mb-4"),
-                dbc.Col(dbc.Card(children=[dbc.CardHeader("Medal Trends Over Time", id="medals-time-header", style=card_header_style, className=f"fw-bold text-{olympic_colors[1]}"), dbc.CardBody(id="medals-time-graph-content", style=plot_card_body_style)], style=card_style, className="h-100"), width=12, md=6, className="mb-4"),
+                dbc.Col(dbc.Card(children=[dbc.CardHeader("Top Countries by Medal Count", id="top-countries-header", style=card_header_style, className=f"fw-bold text-{olympic_colors[0]}"), dbc.CardBody(id="top-countries-graph-content", style=plot_card_body_style)], style=card_style, className="h-100 chart-card animate-slide"), width=12, md=6, className="mb-4"),
+                dbc.Col(dbc.Card(children=[dbc.CardHeader("Medal Trends Over Time", id="medals-time-header", style=card_header_style, className=f"fw-bold text-{olympic_colors[1]}"), dbc.CardBody(id="medals-time-graph-content", style=plot_card_body_style)], style=card_style, className="h-100 chart-card animate-slide"), width=12, md=6, className="mb-4"),
             ], className="align-items-stretch g-4"),
         ], id='sport-profile-visuals', className="mt-4"))
     ])

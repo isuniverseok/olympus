@@ -17,8 +17,26 @@ default_noc2 = NOC_OPTIONS_NO_ALL[1]['value'] if len(NOC_OPTIONS_NO_ALL) > 1 els
 
 
 layout = dbc.Container([
-    html.H3("Compare Two Countries"),
-    html.Hr(),
+    # --- Hero Section ---
+    dbc.Row([
+        dbc.Col([
+            html.Div([
+                html.H1("Country Comparison", className="display-4 text-primary mb-4"),
+                html.P("Compare Olympic performance metrics and statistics between two countries.", 
+                      className="lead text-muted mb-5")
+            ], className="text-center hero-content")
+        ], width=12)
+    ], className="mb-4"),
+
+    # --- Description ---
+    dbc.Row([
+        dbc.Col([
+            html.P("Select two countries to compare their Olympic achievements, participation trends, and performance metrics.", 
+                  className="lead text-muted mb-4")
+        ], width=12)
+    ]),
+    
+    # Country Selection
     dbc.Row([
         dbc.Col([
             html.Label("Select Country 1 (NOC):", className="fw-bold"),

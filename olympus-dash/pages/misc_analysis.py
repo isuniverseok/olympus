@@ -689,14 +689,25 @@ def create_gender_participation_chart(filtered_df):
 # Main layout
 layout = html.Div([
     dbc.Container([
+        # --- Hero Section ---
         dbc.Row([
             dbc.Col([
-                html.H2("Advanced Olympic Analytics", className="text-primary mt-3 mb-4"),
+                html.Div([
+                    html.H1("Advanced Olympic Analytics", className="display-4 text-primary mb-4"),
+                    html.P("Explore deeper patterns and insights with these advanced, interactive visualizations.", 
+                          className="lead text-muted mb-5")
+                ], className="text-center hero-content")
+            ], width=12)
+        ], className="mb-4"),
+
+        # --- Description ---
+        dbc.Row([
+            dbc.Col([
                 dbc.Alert([
                     html.H4("Interactive Visualizations", className="alert-heading"),
-                    html.P("Explore deeper patterns and insights with these advanced, interactive visualizations."),
+                    html.P("Use the filters below to customize your analysis and discover hidden trends in Olympic data."),
                     html.Hr(),
-                    html.P("Use the filters below to customize your analysis and discover hidden trends in Olympic data.")
+                    html.P("Compare physical characteristics, analyze gender participation, and explore medal trends across different sports and countries.")
                 ], color="info", className="mb-4"),
             ], width=12)
         ]),
@@ -738,7 +749,7 @@ layout = html.Div([
                             html.Span(id="filter-summary", className="ms-3 text-muted")
                         ])
                     ])
-                ], className="mb-4")
+                ], className="analysis-card animate-slide")
             ], width=12)
         ]),
         
@@ -750,7 +761,7 @@ layout = html.Div([
                     dbc.CardBody([
                         dcc.Graph(id='medal-trend-chart')
                     ])
-                ], className="mb-4")
+                ], className="chart-card animate-slide mb-4")
             ], width=12)
         ]),
         
@@ -762,7 +773,7 @@ layout = html.Div([
                     dbc.CardBody([
                         dcc.Graph(id='age-evolution-chart')
                     ])
-                ], className="mb-4")
+                ], className="chart-card animate-slide mb-4")
             ], width=6),
             
             dbc.Col([
@@ -771,7 +782,7 @@ layout = html.Div([
                     dbc.CardBody([
                         dcc.Graph(id='sport-heatmap')
                     ])
-                ], className="mb-4")
+                ], className="chart-card animate-slide mb-4")
             ], width=6)
         ]),
         
@@ -783,7 +794,7 @@ layout = html.Div([
                     dbc.CardBody([
                         dcc.Graph(id='gender-participation-chart')
                     ])
-                ], className="mb-4")
+                ], className="chart-card animate-slide mb-4")
             ], width=12)
         ]),
         
@@ -821,7 +832,7 @@ layout = html.Div([
                             ], label="Medal History")
                         ])
                     ])
-                ], className="mb-4")
+                ], className="analysis-card animate-slide mb-4")
             ], width=12)
         ])
         
