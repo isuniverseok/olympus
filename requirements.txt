@@ -6,3 +6,5 @@ numpy
 scipy
 scikit-learn
 matplotlib
+wordcloud
+Pillow
