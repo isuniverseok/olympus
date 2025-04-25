@@ -1,0 +1,54 @@
+/* olympus-dash/assets/custom.css */
+
+/* Navbar adjustments */
+.navbar {
+  padding-top: 0.8rem; /* Increase top/bottom padding slightly */
+  padding-bottom: 0.8rem;
+}
+
+.navbar-brand {
+  font-size: 1.4rem; /* Slightly larger brand text */
+  font-weight: 600; /* Make brand slightly bolder */
+}
+
+.navbar .nav-item {
+  margin-left: 0.5rem; /* Add space to the left of each nav item */
+  margin-right: 0.5rem; /* Add space to the right of each nav item */
+}
+
+.navbar .nav-link {
+  font-size: 1.05rem; /* Slightly larger nav link text */
+  padding-left: 0.8rem !important; /* Ensure padding overrides Bootstrap defaults */
+  padding-right: 0.8rem !important;
+}
+
+/* Add hover effect for nav links */
+.navbar .nav-link:hover {
+  color: #007bff !important; /* Bootstrap primary blue on hover */
+}
+
+/* Footer adjustment (optional) */
+footer .container {
+    border-top: 1px solid #e9ecef; /* Add a subtle top border like the hr */
+    padding-top: 1.5rem; /* Add padding above footer content */
+}
+
+/* --- NEW: Landing Page Logo Hover Effect --- */
+#landing-logo-img {
+  transition: transform 0.3s ease-in-out; /* Smooth transition for hover effect */
+}
+
+#landing-logo-img:hover {
+  transform: scale(1.1); /* Slightly enlarge the image on hover */
+  cursor: pointer; /* Optional: Change cursor to indicate interactivity */
+}
+
+/* --- NEW: Card Hover Effects --- */
+.card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth transition for hover */
+}
+
+.card:hover {
+  transform: translateY(-3px); /* Slightly lift the card */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+} 
