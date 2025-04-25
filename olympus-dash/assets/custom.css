@@ -12,19 +12,25 @@
 }
 
 .navbar .nav-item {
-  margin-left: 0.5rem; /* Add space to the left of each nav item */
-  margin-right: 0.5rem; /* Add space to the right of each nav item */
+  /* margin-left: 0.5rem; Let padding handle spacing */
+  margin-right: 0.5rem;
+}
+
+/* Add vertical separator */
+.navbar .nav-item:not(:first-child) {
+  border-left: 1px solid rgba(255, 255, 255, 0.25); /* Semi-transparent white line */
 }
 
 .navbar .nav-link {
   font-size: 1.05rem; /* Slightly larger nav link text */
-  padding-left: 0.8rem !important; /* Ensure padding overrides Bootstrap defaults */
-  padding-right: 0.8rem !important;
+  padding-left: 1rem !important; /* Increased padding for space around border */
+  padding-right: 1rem !important; /* Match padding */
 }
 
 /* Add hover effect for nav links */
 .navbar .nav-link:hover {
-  color: #007bff !important; /* Bootstrap primary blue on hover */
+  color: #ffffff !important; /* Keep text white (or adjust if needed) */
+  opacity: 0.8; /* Slight fade effect */
 }
 
 /* Footer adjustment (optional) */
