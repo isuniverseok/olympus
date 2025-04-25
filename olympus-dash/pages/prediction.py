@@ -59,7 +59,8 @@ def prepare_prediction_data(noc, season):
         country_data = country_data[country_data['Year'] % 4 == 2]  # Winter Olympics are in years divisible by 2 but not 4
     
     # Calculate yearly medal counts
-    yearly_medals = country_data[country_data['Medal'] != 'None'].groupby('Year')['Medal'].count().reset_index()
+    yearly_medals = country_data[country_data['Medal'] != 'None'].groupby(['Year', 'Event', 'Medal']).size().reset_index()
+    yearly_medals = yearly_medals.groupby('Year')['Medal'].count().reset_index()
     yearly_medals.columns = ['Year', 'Medal_Count']
     
     # Calculate yearly athlete counts
@@ -187,6 +188,27 @@ def identify_breakout_sports(noc, season):
             })
     
     return pd.DataFrame(sport_growth)
+
+# Function to test medal counting
+def test_medal_counting(noc='USA', season='Summer'):
+    # Get historical data for the country
+    country_data = df[df['NOC'] == noc].copy()
+    
+    # Filter by season
+    if season == 'Summer':
+        country_data = country_data[country_data['Year'] % 4 == 0]  # Summer Olympics are in years divisible by 4
+    else:  # Winter
+        country_data = country_data[country_data['Year'] % 4 == 2]  # Winter Olympics are in years divisible by 2 but not 4
+    
+    # Calculate yearly medal counts
+    yearly_medals = country_data[country_data['Medal'] != 'None'].groupby(['Year', 'Event', 'Medal']).size().reset_index()
+    print("\nMedals by Year, Event, and Medal Type:")
+    print(yearly_medals)
+    
+    yearly_medals = yearly_medals.groupby('Year')['Medal'].count().reset_index()
+    yearly_medals.columns = ['Year', 'Medal_Count']
+    print("\nTotal Medals by Year:")
+    print(yearly_medals)
 
 # Create the layout
 layout = dbc.Container([
@@ -354,3 +376,7 @@ def update_predictions(selected_noc, selected_season):
             *summary_cards
         ], width=12, lg=4)
     ])
+
+# Add this at the end of the file to run the test
+if __name__ == "__main__":
+    test_medal_counting()
