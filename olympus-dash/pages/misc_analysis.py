@@ -808,12 +808,13 @@ layout = dbc.Container([
                 dbc.Col(dbc.Card(children=[
                     dbc.CardHeader("Sport-Attribute Heatmap", style=card_header_style, className=f"fw-bold text-{olympic_colors[1]}"),
                     dbc.CardBody(dcc.Graph(id='sport-heatmap'), style=plot_card_body_style)
-                ], style=card_style, className="h-100 chart-card animate-slide"), width=12, lg=6, className="mb-4"),
-                
+                ], style=card_style, className="h-100 chart-card animate-slide"), width=12, className="mb-4"),
+            ], className="align-items-stretch g-4"),
+            dbc.Row([
                 dbc.Col(dbc.Card(children=[
                     dbc.CardHeader("3D Sport Characteristics", style=card_header_style, className=f"fw-bold text-{olympic_colors[2]}"),
                     dbc.CardBody(dcc.Graph(id='sport-3d-scatter'), style=plot_card_body_style)
-                ], style=card_style, className="h-100 chart-card animate-slide"), width=12, lg=6, className="mb-4"),
+                ], style=card_style, className="h-100 chart-card animate-slide"), width=12, className="mb-4"),
             ], className="align-items-stretch g-4"),
         ], label="Physical Characteristics"),
         
@@ -851,12 +852,7 @@ layout = dbc.Container([
                 dbc.Col(dbc.Card(children=[
                     dbc.CardHeader("Sport Characteristics", style=card_header_style, className=f"fw-bold text-{olympic_colors[0]}"),
                     dbc.CardBody(dcc.Graph(id='sport-radar-chart'), style=plot_card_body_style)
-                ], style=card_style, className="h-100 chart-card animate-slide"), width=12, lg=6, className="mb-4"),
-                
-                dbc.Col(dbc.Card(children=[
-                    dbc.CardHeader("Sport Statistics", style=card_header_style, className=f"fw-bold text-{olympic_colors[1]}"),
-                    dbc.CardBody(html.Div(id='sport-stats-card'), style=plot_card_body_style)
-                ], style=card_style, className="h-100 chart-card animate-slide"), width=12, lg=6, className="mb-4"),
+                ], style=card_style, className="h-100 chart-card animate-slide"), width=12, className="mb-4"),
             ], className="align-items-stretch g-4"),
         ], label="Sport Deep Dive"),
     ], className="mb-4"),
