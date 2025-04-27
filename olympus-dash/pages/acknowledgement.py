@@ -86,8 +86,8 @@ layout = dbc.Container([
                                 html.Li("Arnesh Dadhich"),
                                 html.Li("Nirmal Prajapati"),
                                 html.Li("Rajat Gattani"),
-                                html.Li("Utkarsh Agarwal"),
-                                html.Li("Vipul Chanchalani"),
+                                html.Li("Utkarsh Agrawal"),
+                                html.Li("Vipul Chanchlani"),
                                 html.Li("Vishal Himmatsinghka"),
                                 html.Li("Yash Verma"),
                             ])
