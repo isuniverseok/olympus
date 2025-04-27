@@ -29,6 +29,7 @@ desired_order = [
     "Olympic Year",
     "Prediction",
     "Sport Profile",
+    "Economic Factors (HDI)",
     "Acknowledgement"
 ]
 
@@ -49,6 +50,8 @@ for name in desired_order:
             "Olympic Year": "calendar-event-fill",
             "Prediction": "graph-up-arrow",
             "Sport Profile": "trophy-fill",
+            "More Analysis": "clipboard-data",
+            "Economic Factors (HDI)": "cash-coin",
             "Acknowledgement": "info-circle-fill"
         }.get(name, "circle-fill")
         

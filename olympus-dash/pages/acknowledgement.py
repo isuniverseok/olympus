@@ -21,14 +21,11 @@ layout = dbc.Container([
                           href="https://www.kaggle.com/datasets/heesoo37/120-years-of-olympic-history-athletes-and-results",
                           target="_blank",
                           className="text-decoration-none"),
-                    " on Kaggle"
+                    " on Kaggle (Main source for athlete events, NOCs)."
                 ]),
-                html.Li([
-                    html.A("International Olympic Committee (IOC) Official Website",
-                          href="https://olympics.com/",
-                          target="_blank",
-                          className="text-decoration-none")
-                ]),
+                html.Li("Human Development Index (HDI) Data"),
+                html.Li("Olympic Host City Data"),
+                html.Li("Emblem and Mascot Data"),
             ], className="mb-4"),
             
             # Technology Stack Section
@@ -37,10 +34,11 @@ layout = dbc.Container([
                 dbc.Col([
                     dbc.Card(
                         dbc.CardBody([
-                            html.H5("Frontend", className="card-title"),
+                            html.H5("Core Framework", className="card-title"),
                             html.Ul([
+                                html.Li("Python"),
                                 html.Li("Dash (Plotly)"),
-                                html.Li("Dash Bootstrap Components"),
+                                html.Li("Dash Bootstrap Components (Flatly Theme)"),
                                 html.Li("HTML/CSS"),
                             ])
                         ]),
@@ -50,11 +48,11 @@ layout = dbc.Container([
                 dbc.Col([
                     dbc.Card(
                         dbc.CardBody([
-                            html.H5("Backend", className="card-title"),
+                            html.H5("Data Handling & Analysis", className="card-title"),
                             html.Ul([
-                                html.Li("Python"),
                                 html.Li("Pandas"),
                                 html.Li("NumPy"),
+                                html.Li("Scikit-learn"),
                             ])
                         ]),
                         className="h-100"
@@ -66,8 +64,7 @@ layout = dbc.Container([
                             html.H5("Data Visualization", className="card-title"),
                             html.Ul([
                                 html.Li("Plotly"),
-                                html.Li("Mapbox"),
-                                html.Li("D3.js"),
+                                html.Li("Matplotlib"),
                             ])
                         ]),
                         className="h-100"
@@ -85,10 +82,14 @@ layout = dbc.Container([
                         dbc.CardBody([
                             html.H5("Team Members", className="card-title"),
                             html.Ul([
-                                html.Li("Manoj Gattani"),
-                                html.Li("Sai Kiran"),
-                                html.Li("Sai Teja"),
-                                html.Li("Sai Charan"),
+                                html.Li("Abhishek Choudhary"),
+                                html.Li("Arnesh Dadhich"),
+                                html.Li("Nirmal Prajapati"),
+                                html.Li("Rajat Gattani"),
+                                html.Li("Utkarsh Agarwal"),
+                                html.Li("Vipul Chanchalani"),
+                                html.Li("Vishal Himmatsinghka"),
+                                html.Li("Yash Verma"),
                             ])
                         ])
                     )
@@ -98,7 +99,7 @@ layout = dbc.Container([
             # Footer
             html.Hr(className="mt-4"),
             html.P(
-                "Created with ❤️ at University of Illinois Chicago",
+                "Created with ❤️ at IIT Kanpur",
                 className="text-center text-muted mt-4"
             ),
         ]),
