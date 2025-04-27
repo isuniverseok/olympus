@@ -42,6 +42,7 @@ layout = dbc.Container([
     dbc.Row([
         dbc.Col([
             html.Div([
+                html.Img(src="/assets/imgs/olympic_logo.png", className="mb-4", style={"height": "100px"}),
                 html.H1("Olympus Insight", className="display-3 fw-bold text-primary mb-4"),
                 html.P("Explore Olympic data through interactive visualizations and insights.", 
                       className="lead mb-5")

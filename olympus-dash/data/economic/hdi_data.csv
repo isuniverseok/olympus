@@ -1,0 +1,162 @@
+Country,CountryCode,Year,HDI
+United States,UNI,1990,0.835
+United States,UNI,1995,0.851
+United States,UNI,2000,0.868
+United States,UNI,2005,0.884
+United States,UNI,2010,0.901
+United States,UNI,2015,0.917
+United States,UNI,2020,0.934
+China,CHI,1990,0.627
+China,CHI,1995,0.661
+China,CHI,2000,0.696
+China,CHI,2005,0.73
+China,CHI,2010,0.764
+China,CHI,2015,0.799
+China,CHI,2020,0.833
+Japan,JAP,1990,0.601
+Japan,JAP,1995,0.631
+Japan,JAP,2000,0.662
+Japan,JAP,2005,0.693
+Japan,JAP,2010,0.723
+Japan,JAP,2015,0.754
+Japan,JAP,2020,0.784
+Germany,GER,1990,0.699
+Germany,GER,1995,0.713
+Germany,GER,2000,0.727
+Germany,GER,2005,0.741
+Germany,GER,2010,0.754
+Germany,GER,2015,0.768
+Germany,GER,2020,0.782
+France,FRA,1990,0.64
+France,FRA,1995,0.661
+France,FRA,2000,0.682
+France,FRA,2005,0.702
+France,FRA,2010,0.723
+France,FRA,2015,0.744
+France,FRA,2020,0.765
+Italy,ITA,1990,0.674
+Italy,ITA,1995,0.72
+Italy,ITA,2000,0.765
+Italy,ITA,2005,0.81
+Italy,ITA,2010,0.855
+Italy,ITA,2015,0.9
+Italy,ITA,2020,0.945
+United Kingdom,UNI,1990,0.78
+United Kingdom,UNI,1995,0.8
+United Kingdom,UNI,2000,0.821
+United Kingdom,UNI,2005,0.841
+United Kingdom,UNI,2010,0.861
+United Kingdom,UNI,2015,0.882
+United Kingdom,UNI,2020,0.902
+Russia,RUS,1990,0.654
+Russia,RUS,1995,0.697
+Russia,RUS,2000,0.741
+Russia,RUS,2005,0.784
+Russia,RUS,2010,0.828
+Russia,RUS,2015,0.871
+Russia,RUS,2020,0.915
+Australia,AUS,1990,0.81
+Australia,AUS,1995,0.833
+Australia,AUS,2000,0.855
+Australia,AUS,2005,0.877
+Australia,AUS,2010,0.899
+Australia,AUS,2015,0.921
+Australia,AUS,2020,0.943
+Canada,CAN,1990,0.791
+Canada,CAN,1995,0.825
+Canada,CAN,2000,0.859
+Canada,CAN,2005,0.893
+Canada,CAN,2010,0.927
+Canada,CAN,2015,0.961
+Canada,CAN,2020,0.995
+Brazil,BRA,1990,0.642
+Brazil,BRA,1995,0.671
+Brazil,BRA,2000,0.699
+Brazil,BRA,2005,0.727
+Brazil,BRA,2010,0.755
+Brazil,BRA,2015,0.783
+Brazil,BRA,2020,0.811
+India,IND,1990,0.551
+India,IND,1995,0.591
+India,IND,2000,0.632
+India,IND,2005,0.672
+India,IND,2010,0.713
+India,IND,2015,0.753
+India,IND,2020,0.794
+South Korea,SOU,1990,0.51
+South Korea,SOU,1995,0.548
+South Korea,SOU,2000,0.586
+South Korea,SOU,2005,0.624
+South Korea,SOU,2010,0.663
+South Korea,SOU,2015,0.701
+South Korea,SOU,2020,0.739
+Netherlands,NET,1990,0.878
+Netherlands,NET,1995,0.888
+Netherlands,NET,2000,0.899
+Netherlands,NET,2005,0.909
+Netherlands,NET,2010,0.919
+Netherlands,NET,2015,0.93
+Netherlands,NET,2020,0.94
+Spain,SPA,1990,0.605
+Spain,SPA,1995,0.654
+Spain,SPA,2000,0.704
+Spain,SPA,2005,0.753
+Spain,SPA,2010,0.802
+Spain,SPA,2015,0.852
+Spain,SPA,2020,0.901
+Ukraine,UKR,1990,0.456
+Ukraine,UKR,1995,0.496
+Ukraine,UKR,2000,0.536
+Ukraine,UKR,2005,0.576
+Ukraine,UKR,2010,0.617
+Ukraine,UKR,2015,0.657
+Ukraine,UKR,2020,0.697
+Kenya,KEN,1990,0.56
+Kenya,KEN,1995,0.593
+Kenya,KEN,2000,0.625
+Kenya,KEN,2005,0.658
+Kenya,KEN,2010,0.691
+Kenya,KEN,2015,0.724
+Kenya,KEN,2020,0.756
+Jamaica,JAM,1990,0.81
+Jamaica,JAM,1995,0.852
+Jamaica,JAM,2000,0.894
+Jamaica,JAM,2005,0.936
+Jamaica,JAM,2010,0.978
+Jamaica,JAM,2015,0.999
+Jamaica,JAM,2020,0.999
+Ethiopia,ETH,1990,0.792
+Ethiopia,ETH,1995,0.838
+Ethiopia,ETH,2000,0.884
+Ethiopia,ETH,2005,0.93
+Ethiopia,ETH,2010,0.976
+Ethiopia,ETH,2015,0.999
+Ethiopia,ETH,2020,0.999
+New Zealand,NEW,1990,0.577
+New Zealand,NEW,1995,0.609
+New Zealand,NEW,2000,0.641
+New Zealand,NEW,2005,0.673
+New Zealand,NEW,2010,0.705
+New Zealand,NEW,2015,0.737
+New Zealand,NEW,2020,0.769
+South Africa,SOU,1990,0.734
+South Africa,SOU,1995,0.761
+South Africa,SOU,2000,0.789
+South Africa,SOU,2005,0.816
+South Africa,SOU,2010,0.843
+South Africa,SOU,2015,0.87
+South Africa,SOU,2020,0.898
+Sweden,SWE,1990,0.576
+Sweden,SWE,1995,0.625
+Sweden,SWE,2000,0.674
+Sweden,SWE,2005,0.724
+Sweden,SWE,2010,0.773
+Sweden,SWE,2015,0.822
+Sweden,SWE,2020,0.872
+Norway,NOR,1990,0.423
+Norway,NOR,1995,0.438
+Norway,NOR,2000,0.454
+Norway,NOR,2005,0.469
+Norway,NOR,2010,0.485
+Norway,NOR,2015,0.5
+Norway,NOR,2020,0.516

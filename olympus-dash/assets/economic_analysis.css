@@ -1,0 +1,31 @@
+/* assets/economic_analysis.css */
+
+/* Fix for dropdowns appearing behind other elements on the economic analysis page */
+
+/* Target the dropdown wrappers */
+#hdi-year-dropdown,
+#hdi-sport-dropdown {
+    position: relative; /* Needed for z-index */
+    z-index: 20;      /* Base stacking context */
+}
+
+/* Target the dropdown menu container specifically */
+#hdi-year-dropdown .Select-menu-outer,
+#hdi-sport-dropdown .Select-menu-outer {
+    position: relative; /* Ensure it respects z-index */
+    z-index: 1100 !important; /* High value, !important to try overriding conflicting styles */
+}
+
+/* Target the dropdown wrappers on Olympic Year page */
+#olympic-year-year-dropdown,
+#olympic-year-season-dropdown {
+    position: relative; /* Needed for z-index */
+    z-index: 20;      /* Base stacking context */
+}
+
+/* Target the dropdown menu container specifically on Olympic Year page */
+#olympic-year-year-dropdown .Select-menu-outer,
+#olympic-year-season-dropdown .Select-menu-outer {
+    position: relative; /* Ensure it respects z-index */
+    z-index: 1100 !important; /* High value, !important to try overriding conflicting styles */
+} 

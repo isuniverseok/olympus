@@ -51,6 +51,13 @@ except Exception as e:
     sports_list = []
     seasons = []
 
+# Constants for styling
+PLOTLY_TEMPLATE = "plotly_white"
+olympic_colors = ["primary", "warning", "info", "success", "danger"]
+card_style = {"backgroundColor": "#ffffff", "border": "1px solid #dee2e6"}
+card_header_style = {"backgroundColor": "#e9ecef", "fontWeight": "600", "borderBottom": "1px solid #dee2e6"}
+plot_card_body_style = {"padding": "0.5rem"}
+
 # Advanced analysis functions
 def create_medal_trend_chart(filtered_df, n_countries=10):
     """Create a line chart showing medal trends for top countries over time"""
@@ -688,20 +695,35 @@ def create_gender_participation_chart(filtered_df):
 
 # Layout definition
 layout = dbc.Container([
+    # Hero Section
     dbc.Row([
         dbc.Col([
-            html.H2("Advanced Olympic Analysis", className="text-primary mb-4"),
-            html.P("Explore deeper insights and patterns in Olympic data through advanced visualizations and analysis.",
-                   className="lead mb-4"),
-        ])
-    ]),
+            html.Div([
+                html.H1("Advanced Olympic Analysis", className="display-4 text-primary mb-4"),
+                html.P("Explore deeper insights and patterns in Olympic data through advanced visualizations and analysis.",
+                       className="lead text-muted mb-5")
+            ], className="text-center hero-content")
+        ], width=12)
+    ], className="mb-4"),
+    
+    # Title Row
+    dbc.Row([
+        dbc.Col(html.H3("Advanced Analysis Dashboard", className="text-primary d-inline-block me-3"), width='auto'),
+    ], align="center", className="mb-3"),
+    
+    # Info Alert
+    dbc.Alert([
+        html.H5("What is this page?", className="alert-heading"),
+        html.P("Explore advanced patterns and insights across Olympic history, including athlete characteristics, medal trends, and sport-specific analysis.", className="mb-0")
+    ], id='info-alert', color="info", className="shadow-sm mb-4 border border-info"),
     
     # Filters Section
     dbc.Card([
         dbc.CardBody([
+            html.H5("Filters", className="card-title text-primary mb-3"),
             dbc.Row([
                 dbc.Col([
-                    html.Label("Year Range"),
+                    html.Label("Year Range:", className="fw-bold small"),
                     dcc.RangeSlider(
                         id='year-range-slider',
                         min=min_year,
@@ -710,12 +732,13 @@ layout = dbc.Container([
                         value=[min_year, max_year],
                         marks={str(year): str(year) for year in 
                                range(min_year, max_year + 1, 20)},
+                        tooltip={"placement": "bottom", "always_visible": False},
                         className="mb-4"
                     ),
                 ], width=12, lg=6),
                 
                 dbc.Col([
-                    html.Label("Season"),
+                    html.Label("Season:", className="fw-bold small d-block mb-2"),
                     dbc.Checklist(
                         id='season-toggle',
                         options=[{'label': season, 'value': season} 
@@ -727,7 +750,7 @@ layout = dbc.Container([
                 ], width=12, lg=3),
                 
                 dbc.Col([
-                    html.Label("Sport"),
+                    html.Label("Sport:", className="fw-bold small"),
                     dcc.Dropdown(
                         id='sport-characteristics-dropdown',
                         options=[{'label': sport, 'value': sport} 
@@ -750,7 +773,7 @@ layout = dbc.Container([
                 ], width=12),
             ]),
         ])
-    ], className="mb-4 shadow-sm"),
+    ], className="mb-4 shadow bg-light border-secondary"),
     
     # Analysis Summary
     dbc.Row([
@@ -764,59 +787,80 @@ layout = dbc.Container([
         # Medal Analysis Tab
         dbc.Tab([
             dbc.Row([
-                dbc.Col([
-                    dcc.Graph(id='medal-trend-chart')
-                ], width=12),
-            ], className="mb-4"),
+                dbc.Col(dbc.Card(children=[
+                    dbc.CardHeader("Medal Trends Over Time", style=card_header_style, className=f"fw-bold text-{olympic_colors[0]}"),
+                    dbc.CardBody(dcc.Graph(id='medal-trend-chart'), style=plot_card_body_style)
+                ], style=card_style, className="h-100 chart-card animate-slide"), width=12, className="mb-4"),
+            ], className="align-items-stretch g-4"),
         ], label="Medal Trends"),
         
         # Physical Characteristics Tab
         dbc.Tab([
             dbc.Row([
                 dbc.Col([
-                    dcc.Graph(id='sport-heatmap')
-                ], width=12, lg=6),
-                dbc.Col([
-                    dcc.Graph(id='sport-3d-scatter')
-                ], width=12, lg=6),
-            ], className="mb-4"),
+                    dbc.Alert([
+                        html.H5("Select a Sport", className="alert-heading"),
+                        html.P("Please select a specific sport from the dropdown above to view its physical characteristics.", className="mb-0")
+                    ], id='sport-selection-alert-physical', color="info", className="shadow-sm mb-4 border border-info"),
+                ], width=12),
+            ]),
+            dbc.Row([
+                dbc.Col(dbc.Card(children=[
+                    dbc.CardHeader("Sport-Attribute Heatmap", style=card_header_style, className=f"fw-bold text-{olympic_colors[1]}"),
+                    dbc.CardBody(dcc.Graph(id='sport-heatmap'), style=plot_card_body_style)
+                ], style=card_style, className="h-100 chart-card animate-slide"), width=12, className="mb-4"),
+            ], className="align-items-stretch g-4"),
+            dbc.Row([
+                dbc.Col(dbc.Card(children=[
+                    dbc.CardHeader("3D Sport Characteristics", style=card_header_style, className=f"fw-bold text-{olympic_colors[2]}"),
+                    dbc.CardBody(dcc.Graph(id='sport-3d-scatter'), style=plot_card_body_style)
+                ], style=card_style, className="h-100 chart-card animate-slide"), width=12, className="mb-4"),
+            ], className="align-items-stretch g-4"),
         ], label="Physical Characteristics"),
         
         # Age Analysis Tab
         dbc.Tab([
             dbc.Row([
-                dbc.Col([
-                    dcc.Graph(id='age-evolution-chart')
-                ], width=12),
-            ], className="mb-4"),
+                dbc.Col(dbc.Card(children=[
+                    dbc.CardHeader("Age Evolution", style=card_header_style, className=f"fw-bold text-{olympic_colors[3]}"),
+                    dbc.CardBody(dcc.Graph(id='age-evolution-chart'), style=plot_card_body_style)
+                ], style=card_style, className="h-100 chart-card animate-slide"), width=12, className="mb-4"),
+            ], className="align-items-stretch g-4"),
         ], label="Age Analysis"),
         
         # Gender Analysis Tab
         dbc.Tab([
             dbc.Row([
-                dbc.Col([
-                    dcc.Graph(id='gender-participation-chart')
-                ], width=12),
-            ], className="mb-4"),
+                dbc.Col(dbc.Card(children=[
+                    dbc.CardHeader("Gender Participation", style=card_header_style, className=f"fw-bold text-{olympic_colors[4]}"),
+                    dbc.CardBody(dcc.Graph(id='gender-participation-chart'), style=plot_card_body_style)
+                ], style=card_style, className="h-100 chart-card animate-slide"), width=12, className="mb-4"),
+            ], className="align-items-stretch g-4"),
         ], label="Gender Analysis"),
         
         # Sport Deep Dive Tab
         dbc.Tab([
             dbc.Row([
                 dbc.Col([
-                    dcc.Graph(id='sport-radar-chart')
-                ], width=12, lg=6),
-                dbc.Col([
-                    html.Div(id='sport-stats-card', className="h-100")
-                ], width=12, lg=6),
-            ], className="mb-4"),
+                    dbc.Alert([
+                        html.H5("Select a Sport", className="alert-heading"),
+                        html.P("Please select a specific sport from the dropdown above to view detailed sport characteristics and statistics.", className="mb-0")
+                    ], id='sport-selection-alert-deepdive', color="info", className="shadow-sm mb-4 border border-info"),
+                ], width=12),
+            ]),
+            dbc.Row([
+                dbc.Col(dbc.Card(children=[
+                    dbc.CardHeader("Sport Characteristics", style=card_header_style, className=f"fw-bold text-{olympic_colors[0]}"),
+                    dbc.CardBody(dcc.Graph(id='sport-radar-chart'), style=plot_card_body_style)
+                ], style=card_style, className="h-100 chart-card animate-slide"), width=12, className="mb-4"),
+            ], className="align-items-stretch g-4"),
         ], label="Sport Deep Dive"),
     ], className="mb-4"),
     
     # Hidden div for page load trigger
-    html.Div(id='page-load-trigger'),
+    html.Div(id='page-load-trigger', style={'display': 'none'}),
     
-], fluid=True, className="py-4")
+], fluid=True, className="pt-3 pb-5 bg-light text-dark")
 
 @callback(
     [Output('medal-trend-chart', 'figure'),
