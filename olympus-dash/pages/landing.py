@@ -1,10 +1,11 @@
 # pages/landing.py
 import dash
-from dash import html, dcc, callback, Input, Output
+from dash import html, dcc, callback, Input, Output, State
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
 from data_loader import df, FILTER_OPTIONS
+import pandas as pd
 
 dash.register_page(__name__, path='/', name='Home')
 
@@ -64,6 +65,7 @@ layout = dbc.Container([
             dbc.Card([
                 dbc.CardHeader("Athlete Participation Trends", className="text-primary"),
                 dbc.CardBody([
+                    # Graph
                     dcc.Graph(id='athlete-trend-chart', config={'displayModeBar': False})
                 ])
             ], className="chart-card animate-slide", style=card_style)
@@ -92,6 +94,7 @@ layout = dbc.Container([
     ])
 ], fluid=True, className="px-4 py-3")
 
+# --- Callbacks ---
 # --- Callback for the athlete trend chart ---
 @callback(
     Output('athlete-trend-chart', 'figure'),
@@ -106,23 +109,38 @@ def update_athlete_trend(_):
             yaxis={'visible': False}
         )
     
-    athletes_per_year = df.drop_duplicates(subset=['Year', 'Name']).groupby('Year').size().reset_index(name='Unique Athletes')
+    # Create separate dataframes for Summer and Winter Olympics
+    summer_df = df[df['Season'] == 'Summer']
+    winter_df = df[df['Season'] == 'Winter']
     
+    # Calculate athletes per year for each season
+    summer_athletes = summer_df.drop_duplicates(subset=['Year', 'Name']).groupby('Year').size().reset_index(name='Athletes')
+    summer_athletes['Season'] = 'Summer'
+    
+    winter_athletes = winter_df.drop_duplicates(subset=['Year', 'Name']).groupby('Year').size().reset_index(name='Athletes')
+    winter_athletes['Season'] = 'Winter'
+    
+    # Combine the data
+    combined_df = pd.concat([summer_athletes, winter_athletes])
+    
+    # Create a single figure with two trend lines
     fig = px.line(
-        athletes_per_year,
+        combined_df,
         x='Year',
-        y='Unique Athletes',
-        title='Athlete Participation Over Time',
+        y='Athletes',
+        color='Season',
+        title='Athlete Participation by Olympic Season',
         markers=True,
-        template="plotly_white"
+        template="plotly_white",
+        color_discrete_map={'Summer': '#FF7F0E', 'Winter': '#1F77B4'}
     )
     
     fig.update_layout(
         xaxis_title='Olympic Year',
-        yaxis_title='Number of Unique Athletes',
+        yaxis_title='Number of Athletes',
         title_x=0.5,
         hovermode='x unified',
-        showlegend=False,
+        legend_title='Season',
         margin=dict(t=30, b=30, l=30, r=30)
     )
     

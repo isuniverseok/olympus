@@ -3,6 +3,11 @@ import dash
 from dash import dcc, html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
+import os
+
+# Set environment variables to disable debug UI
+os.environ["DASH_DEBUG"] = "false"
+os.environ["DASH_PROPS_CHECK"] = "false"
 
 # Initialize the app with Bootstrap icons
 app = dash.Dash(__name__,
@@ -21,15 +26,19 @@ server = app.server
 # Define the desired order of page names
 desired_order = [
     "Home",
-    "Country Comparison",
     "Country Profile",
+    "Country Comparison",
     "Globe View",
-    "Host Analysis",
-    "More Analysis",
     "Olympic Year",
-    "Prediction",
+    
     "Sport Profile",
+    "Host Analysis",
+    
     "Economic Factors (HDI)",
+    "More Analysis",
+    "Prediction",
+    
+    
     "Acknowledgement"
 ]
 
@@ -115,7 +124,7 @@ sidebar = html.Div(
                 html.Hr(),
                 html.Small(
                     "Group 10 - CS661 Big Data Visual Analytics",
-                    className="text-muted d-block text-center"
+                    className="text-white d-block text-center"
                 )
             ],
             className="sidebar-footer"
@@ -223,4 +232,4 @@ def toggle_sidebar(toggle_clicks, close_clicks, sidebar_state):
 
 # --- Run the App ---
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True, port=8050)
+    app.run(host='0.0.0.0', debug=False, port=8050)
