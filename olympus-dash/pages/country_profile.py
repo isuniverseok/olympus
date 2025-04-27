@@ -274,11 +274,11 @@ layout = dbc.Container([
                     # Country Selection
                     html.Div([
                         html.H5("Select Country", className="text-primary mb-3"),
-                        dcc.Dropdown(
-                            id='country-profile-noc-dropdown',
-                            options=custom_options,
-                            value=default_noc,
-                            clearable=False,
+            dcc.Dropdown(
+                id='country-profile-noc-dropdown',
+                options=custom_options,
+                value=default_noc,
+                clearable=False,
                             className="modern-dropdown mb-4"
                         ),
                     ], className="country-selector text-center"),
@@ -393,13 +393,13 @@ def update_country_visuals(selected_noc, n_sports):
             ])
             return layout_no_medals, header_content, "trigger-animation"
 
-        # --- Calculations & Components ---
+        # --- Calculations & Components --- 
         medal_df = country_df[country_df['Medal'] != 'None'].copy()
 
         unique_event_medals_country = pd.DataFrame()
         if not medal_df.empty:
             unique_event_medals_country = medal_df.drop_duplicates(
-                subset=['Year', 'Season', 'Event', 'Medal']
+                    subset=['Year', 'Season', 'Event', 'Medal']
             )
 
         # --- Medal & Participation Calculations --- 
@@ -507,7 +507,7 @@ def update_country_visuals(selected_noc, n_sports):
             ]),
             
             # Participation and Efficiency Charts
-            dbc.Row([
+        dbc.Row([
                 # Gender Participation Chart
                 dbc.Col([
                     dbc.Card([
@@ -565,7 +565,7 @@ def update_country_visuals(selected_noc, n_sports):
             ]),
             
             # Sports Analysis Section
-            dbc.Row([
+        dbc.Row([
                 # Top Sports Table
                 dbc.Col([
                     dbc.Card([

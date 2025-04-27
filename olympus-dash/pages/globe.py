@@ -17,31 +17,40 @@ def get_medal_counts():
     # Calculate total athletes per country
     total_athletes = df.groupby('NOC').size().reset_index(name='total_athletes')
     
-    # Calculate medal points
-    medal_points = df[df['Medal'] != 'None'].groupby('NOC').agg({
-        'Medal': lambda x: (
-            f"Gold: {sum(x == 'Gold')}<br>"
-            f"Silver: {sum(x == 'Silver')}<br>"
-            f"Bronze: {sum(x == 'Bronze')}<br>"
-            f"Total Points: {sum(x == 'Gold') * 4 + sum(x == 'Silver') * 2 + sum(x == 'Bronze')}"
-        )
-    }).reset_index()
+    # Filter medals and deduplicate to count each event medal only once
+    medals_df = df[df['Medal'] != 'None'].copy()
     
-    # Calculate total points
-    medal_points['total_points'] = df[df['Medal'] != 'None'].apply(
-        lambda x: 4 if x['Medal'] == 'Gold' else (2 if x['Medal'] == 'Silver' else 1), axis=1
-    ).groupby(df['NOC']).sum().values
+    # Get unique medals by country (deduplicated by event)
+    unique_event_medals = medals_df.drop_duplicates(
+        subset=['Year', 'Season', 'Event', 'Medal', 'NOC']
+    )
+    
+    # Create medal summary for hover text
+    medal_summary = unique_event_medals.groupby('NOC').apply(
+        lambda x: f"Gold: {sum(x['Medal'] == 'Gold')}<br>"
+                 f"Silver: {sum(x['Medal'] == 'Silver')}<br>"
+                 f"Bronze: {sum(x['Medal'] == 'Bronze')}<br>"
+                 f"Total Medals: {len(x)}"
+    ).reset_index(name='Medal')
+    
+    # Calculate total medal points using the weighted system
+    medal_points = unique_event_medals.groupby('NOC').apply(
+        lambda x: sum(x['Medal'].map({'Gold': 4, 'Silver': 2, 'Bronze': 1}))
+    ).reset_index(name='total_points')
+    
+    # Merge medal summary with point calculation
+    medal_data = medal_summary.merge(medal_points, on='NOC', how='left')
     
     # Merge with total athletes
-    medal_points = medal_points.merge(total_athletes, on='NOC', how='right')
-    medal_points['total_points'] = medal_points['total_points'].fillna(0)
-    medal_points['total_athletes'] = medal_points['total_athletes'].fillna(0)
+    medal_data = medal_data.merge(total_athletes, on='NOC', how='right')
+    medal_data['total_points'] = medal_data['total_points'].fillna(0)
+    medal_data['total_athletes'] = medal_data['total_athletes'].fillna(0)
     
     # Calculate efficiency
-    medal_points['efficiency'] = medal_points['total_points'] / medal_points['total_athletes']
-    medal_points['efficiency'] = medal_points['efficiency'].fillna(0)
+    medal_data['efficiency'] = medal_data['total_points'] / medal_data['total_athletes']
+    medal_data['efficiency'] = medal_data['efficiency'].fillna(0)
     
-    return medal_points
+    return medal_data
 
 # Create the layout
 layout = dbc.Container([
