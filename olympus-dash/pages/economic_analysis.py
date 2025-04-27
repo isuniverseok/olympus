@@ -10,23 +10,20 @@ from data_loader import df as olympic_df, FILTER_OPTIONS, create_dropdown_option
 # Register the page
 dash.register_page(__name__, name='Economic Factors (HDI)')
 
-# --- Data Loading and Processing ---
+
 
 @dash.callback(
     Output('hdi-data-store', 'data'),
-    Input('hdi-data-store', 'data') # Trigger on load
+    Input('hdi-data-store', 'data') 
 )
 def load_and_process_hdi_data(_):
     """Loads and processes the HDI.csv data."""
     try:
-        # Correct path: relative to the app.py execution directory (olympus-dash)
         hdi_file_path = 'HDI.csv'
         hdi_raw_df = pd.read_csv(hdi_file_path)
 
-        # Clean column names (remove leading/trailing spaces if any)
+        # Clean column names
         hdi_raw_df.columns = hdi_raw_df.columns.str.strip()
-
-        # Melt the dataframe to long format
         id_vars = ['HDI Rank', 'Country']
         value_vars = [col for col in hdi_raw_df.columns if col.isdigit()] # Select only year columns
 
@@ -40,11 +37,10 @@ def load_and_process_hdi_data(_):
                               var_name='Year',
                               value_name='HDI')
 
-        # Clean data: Convert Year to numeric, HDI to numeric (replace '..' with NaN)
+
         hdi_long_df['Year'] = pd.to_numeric(hdi_long_df['Year'], errors='coerce').astype('Int64')
         hdi_long_df['HDI'] = pd.to_numeric(hdi_long_df['HDI'], errors='coerce')
 
-        # Drop rows where HDI or Year is NaN after conversion
         hdi_long_df.dropna(subset=['Year', 'HDI'], inplace=True)
 
         print(f"Successfully loaded and processed HDI data. Shape: {hdi_long_df.shape}")
@@ -57,7 +53,7 @@ def load_and_process_hdi_data(_):
         print(f"Error loading or processing HDI data: {e}")
         return []
 
-# --- Country Name Mapping ---
+
 REGION_TO_HDI_COUNTRY_MAPPING = {
     "USA": "United States",
     "Russia": "Russian Federation",
@@ -87,7 +83,6 @@ REGION_TO_HDI_COUNTRY_MAPPING = {
     # Add more mappings as differences are found
 }
 
-# --- Analysis and Plotting Functions ---
 
 def merge_olympic_hdi(olympic_data, hdi_data, year=None):
     """Merges Olympic medal data with HDI data for a specific year or latest available."""
@@ -101,7 +96,6 @@ def merge_olympic_hdi(olympic_data, hdi_data, year=None):
         
     medals_df = olympic_data[olympic_data['Medal'] != 'None'].copy()
 
-    # ** Correct Medal Counting Logic **
     medals_df['medal_event_key'] = (
         medals_df['Year'].astype(str) + '_' +
         medals_df['Season'].astype(str) + '_' +
@@ -184,7 +178,6 @@ def create_hdi_medal_correlation_scatter(merged_df, year=None):
     fig.update_layout(template='plotly_dark', height=600)
     return fig
 
-# This function now needs the *original* olympic_df and hdi_data to perform sport-specific filtering *before* aggregation
 def create_hdi_sport_performance_bar(olympic_data, hdi_data, sport_filter=None, year=None):
     """Creates bar chart showing medal counts IN A SPECIFIC SPORT grouped by HDI category."""
     if not hdi_data:
@@ -196,7 +189,6 @@ def create_hdi_sport_performance_bar(olympic_data, hdi_data, sport_filter=None, 
     # Prepare HDI data with mapped region
     hdi_df['region_mapped'] = hdi_df['Country'].map(REGION_TO_HDI_COUNTRY_MAPPING).fillna(hdi_df['Country']) 
 
-    # --- Get relevant HDI data (closest year or latest) --- 
     if year:
         target_year = int(year)
         available_hdi_years = sorted([y for y in hdi_df['Year'].unique() if pd.notna(y)])
@@ -212,7 +204,6 @@ def create_hdi_sport_performance_bar(olympic_data, hdi_data, sport_filter=None, 
         hdi_year_df = latest_hdi
         title_year_suffix = "(All Years Merged)"
 
-    # --- Filter Medals by Sport (if applicable) --- 
     if sport_filter and sport_filter != "All":
         sport_medals_df = medals_df[medals_df['Sport'] == sport_filter].copy()
         title = f"Medal Distribution by HDI Category for {sport_filter} {title_year_suffix}"
@@ -220,7 +211,6 @@ def create_hdi_sport_performance_bar(olympic_data, hdi_data, sport_filter=None, 
         sport_medals_df = medals_df.copy()
         title = f"Overall Medal Distribution by HDI Category {title_year_suffix}"
 
-    # --- Count Unique Medals for the filtered DataFrame --- 
     if sport_medals_df.empty:
          return go.Figure().update_layout(title=f"No medals found for {sport_filter or 'selected criteria'} {title_year_suffix}", template='plotly_dark')
          
@@ -232,7 +222,6 @@ def create_hdi_sport_performance_bar(olympic_data, hdi_data, sport_filter=None, 
     )
     unique_sport_medals_df = sport_medals_df.drop_duplicates(subset=['medal_event_key', 'region'])
 
-    # --- Merge Unique Sport Medals with HDI --- 
     merged_sport_df = pd.merge(
         unique_sport_medals_df,
         hdi_year_df,
@@ -244,7 +233,6 @@ def create_hdi_sport_performance_bar(olympic_data, hdi_data, sport_filter=None, 
     if merged_sport_df.empty:
          return go.Figure().update_layout(title=f"No medals found for {sport_filter or 'selected criteria'} {title_year_suffix} with HDI data", template='plotly_dark')
 
-    # --- Create HDI Categories and Aggregate --- 
     merged_sport_df['HDI_Category'] = pd.cut(
         merged_sport_df['HDI'],
         bins=[0, 0.55, 0.7, 0.8, 1.0],
@@ -256,7 +244,6 @@ def create_hdi_sport_performance_bar(olympic_data, hdi_data, sport_filter=None, 
 
     sport_hdi_summary = merged_sport_df.groupby('HDI_Category', observed=False).size().reset_index(name='MedalCount')
 
-    # --- Create Bar Chart --- 
     fig = px.bar(
         sport_hdi_summary,
         x='HDI_Category',
@@ -272,7 +259,6 @@ def create_hdi_sport_performance_bar(olympic_data, hdi_data, sport_filter=None, 
 
 def generate_hdi_insights(merged_df, sport=None, year=None):
     """Generates textual insights based on the HDI analysis."""
-    # merged_df here is the one aggregated for the scatter plot (country-level summary)
     if merged_df.empty:
         return html.P("Insufficient data to generate insights.")
 
@@ -282,7 +268,6 @@ def generate_hdi_insights(merged_df, sport=None, year=None):
 
     insights.append(html.H4(f"HDI Impact Insights {year_text} {sport_text}"))
 
-    # Overall Correlation - Use the already aggregated merged_df
     if len(merged_df) > 1 and merged_df['HDI'].nunique() > 1 and merged_df['MedalCount'].nunique() > 1:
         try:
              corr = merged_df['HDI'].corr(merged_df['MedalCount'])
@@ -290,7 +275,6 @@ def generate_hdi_insights(merged_df, sport=None, year=None):
                  f"Overall correlation between Country/Region HDI and Total Medal Count: ", 
                  html.Strong(f"{corr:.2f}")
              ]))
-             # Add explanation for the correlation value
              explanation = ""
              if abs(corr) >= 0.7:
                  explanation = "This indicates a strong linear relationship. "
@@ -323,7 +307,6 @@ def generate_hdi_insights(merged_df, sport=None, year=None):
 
     # Distribution by HDI Category (based on total medals)
     if 'HDI_Category' in merged_df.columns:
-        # Sum medals per category from the aggregated df
         category_medal_sum = merged_df.groupby('HDI_Category', observed=False)['MedalCount'].sum()
         if category_medal_sum.sum() > 0:
             category_counts = (category_medal_sum / category_medal_sum.sum()).sort_index()
@@ -334,18 +317,15 @@ def generate_hdi_insights(merged_df, sport=None, year=None):
         else:
              insights.append(html.P("No medals found to calculate distribution by HDI category."))
              
-    # Simplified insight - mentioning that the bar chart shows sport-specific distribution if a sport is selected.
     if sport and sport != "All":
         insights.append(html.P(f"The bar chart above shows the distribution of medals specifically for {sport} across HDI categories."))
 
     return html.Div(insights)
 
 
-# --- Layout Definition ---
 layout = dbc.Container(fluid=True, children=[
-    dcc.Store(id='hdi-data-store'), # To store processed HDI data
+    dcc.Store(id='hdi-data-store'), 
 
-    # Hero Section in light grey box
     html.Div([
         dbc.Row([
             dbc.Col([
@@ -359,7 +339,6 @@ layout = dbc.Container(fluid=True, children=[
         ], className="mb-4")
     ], className="bg-light p-3 rounded shadow-sm mb-4"),
     
-    # Analysis Filters Card
     dbc.Row([
         dbc.Col([
             dbc.Card([
@@ -376,7 +355,7 @@ layout = dbc.Container(fluid=True, children=[
                                     sorted(olympic_df['Year'].dropna().unique().astype(int), reverse=True),
                                     include_all=True, all_label="All Years (Latest HDI)"
                                 ),
-                                value="All", # Default to All
+                                value="All", 
                                 clearable=False,
                             )
                         ], md=6),
@@ -388,7 +367,7 @@ layout = dbc.Container(fluid=True, children=[
                                     sorted(olympic_df['Sport'].dropna().unique().tolist()),
                                     include_all=True, all_label="All Sports"
                                 ),
-                                value="All", # Default to All Sports
+                                value="All", 
                                 clearable=False,
                             )
                         ], md=6),
@@ -398,7 +377,6 @@ layout = dbc.Container(fluid=True, children=[
         ])
     ], className="mb-4"),
 
-    # HDI vs. Medal Count Scatter Chart
     dbc.Row([
         dbc.Col([
             dbc.Card([
@@ -412,7 +390,6 @@ layout = dbc.Container(fluid=True, children=[
         ], md=12)
     ], className="mb-4"),
 
-    # Medal Distribution Chart
     dbc.Row([
         dbc.Col([
             dbc.Card([
@@ -426,7 +403,6 @@ layout = dbc.Container(fluid=True, children=[
         ], md=12)
     ], className="mb-4"),
 
-    # Key Insights
     dbc.Row([
         dbc.Col([
             dbc.Card([
@@ -441,7 +417,6 @@ layout = dbc.Container(fluid=True, children=[
     ], className="mb-4")
 ])
 
-# --- Callbacks ---
 
 @callback(
     [Output("hdi-medal-scatter-chart", "figure"),

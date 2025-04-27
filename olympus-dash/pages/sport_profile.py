@@ -5,11 +5,9 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
-import numpy as np # Import numpy for NaN handling if needed
-# Updated import - include more options
+import numpy as np 
 from data_loader import df, SPORT_OPTIONS_NO_ALL, YEAR_OPTIONS, NOC_OPTIONS, get_default_value, DEFAULT_DROPDOWN_LABEL
 
-# --- Icon Mapping Implementation (Using Emojis) ---
 SPORT_ICONS = {
     "Athletics": "🏃",
     "Swimming": "🏊",
@@ -24,23 +22,23 @@ SPORT_ICONS = {
     "Boxing": "🥊",
     "Wrestling": "🤼",
     "Judo": "🥋",
-    "Taekwondo": "🥋", # Same as Judo, could find alternative if needed
+    "Taekwondo": "🥋", 
     "Basketball": "🏀",
-    "Football": "⚽", # Soccer
+    "Football": "⚽", 
     "Volleyball": "🏐",
     "Handball": "🤾",
-    "Hockey": "🏒", # Field Hockey
+    "Hockey": "🏒", 
     "Ice Hockey": "🏒",
     "Tennis": "🎾",
     "Table Tennis": "🏓",
     "Badminton": "🏸",
-    "Equestrianism": "🐎", # Equestrian Sports
+    "Equestrianism": "🐎", 
     "Canoeing": "🛶",
-    "Diving": "🤽", # Closest, could represent diving platform
+    "Diving": "🤽", 
     "Water Polo": "🤽",
-    "Art Competitions": "🎨", # Placeholder
+    "Art Competitions": "🎨", 
     "Skiing": "⛷️",
-    "Biathlon": "⛷️", # Combine Skiing/Shooting visually
+    "Biathlon": "⛷️", 
     "Bobsleigh": "🛷",
     "Luge": "🛷",
     "Skating": "⛸️",
@@ -51,19 +49,18 @@ SPORT_ICONS = {
     "Snowboarding": "🏂",
     "Baseball": "⚾",
     "Cricket": "🏏",
-    "Beach Volleyball": "🏐", # Same icon as Volleyball
-    "Freestyle Skiing": "⛷️", # Grouping under Skiing icon
+    "Beach Volleyball": "🏐", 
+    "Freestyle Skiing": "⛷️", 
     "Golf": "⛳",
     "Motorboating": "🚤",
-    "Polo": "🐎", # Same icon as Equestrianism
-    "Rugby": "🏉", # Includes Rugby Sevens
-    "Ski Jumping": "⛷️", # Grouping under Skiing icon
-    "Triathlon": "🏅", # Using default medal - combination hard to represent
-    "Tug Of War": "🏅", # Using default medal
-    "Default": "🏅" # Medal as default
+    "Polo": "🐎", 
+    "Rugby": "🏉", 
+    "Ski Jumping": "⛷️", 
+    "Triathlon": "🏅", 
+    "Tug Of War": "🏅", 
+    "Default": "🏅" 
 }
 
-# --- Sport Descriptions ---
 SPORT_DESCRIPTIONS = {
     "Athletics": "The foundation of the Olympics, including track events (running, hurdles), field events (jumping, throwing), and road events (marathons, race walks).",
     "Swimming": "Racing through water using various strokes (freestyle, breaststroke, backstroke, butterfly) over set distances in pools or open water.",
@@ -184,14 +181,13 @@ SPORT_WIKIPEDIA = {
     "Default": "https://en.wikipedia.org/wiki/Olympic_Games"
 }
 
-# --- Constants ---
-PLOTLY_TEMPLATE = "plotly_white" # Hardcode light theme template
+
+PLOTLY_TEMPLATE = "plotly_white" 
 dash.register_page(__name__, name='Sport Profile', path_template='/sport/<sport_name>')
 default_sport = get_default_value(SPORT_OPTIONS_NO_ALL)
 DEFAULT_EVENT_LABEL = "All Events"
 DEFAULT_COUNTRY_LABEL = "All Countries"
 
-# Extract years for RangeSlider
 all_years_list = [opt['value'] for opt in YEAR_OPTIONS if isinstance(opt['value'], (int, float))]
 MIN_YEAR = min(all_years_list) if all_years_list else 1896
 MAX_YEAR = max(all_years_list) if all_years_list else 2016
@@ -199,18 +195,16 @@ year_marks = {year: str(year) for year in range(MIN_YEAR, MAX_YEAR + 1, (MAX_YEA
 if MIN_YEAR not in year_marks: year_marks[MIN_YEAR] = str(MIN_YEAR)
 if MAX_YEAR not in year_marks: year_marks[MAX_YEAR] = str(MAX_YEAR)
 
-# --- Layout Definition (Light Theme Only, No Placeholder) ---
 def layout(sport_name=None):
     initial_sport = sport_name if sport_name else default_sport
-    container_class = "pt-3 pb-5 bg-light text-dark" # Light theme base
+    container_class = "pt-3 pb-5 bg-light text-dark" 
     card_style = {"backgroundColor": "#ffffff", "border": "1px solid #dee2e6"}
     card_header_style = {"backgroundColor": "#e9ecef", "fontWeight": "600", "borderBottom": "1px solid #dee2e6"}
     plot_card_body_style = {"padding": "0.5rem"}
     olympic_colors = ["primary", "warning", "info", "success", "danger"]
 
     return dbc.Container(id='sport-profile-container', className=container_class, fluid=True, children=[
-        # --- Hero Section ---
-     dbc.Row([
+        dbc.Row([
         dbc.Col([
                 html.Div([
                     html.H1("Sport Performance Profile", className="display-4 text-primary mb-4"),
@@ -220,26 +214,21 @@ def layout(sport_name=None):
             ], width=12)
         ], className="mb-4"),
 
-        # --- Title Row (No Theme Toggle) ---
         dbc.Row([
             dbc.Col(html.H3("Sport Performance Profile", className="text-primary d-inline-block me-3"), width='auto'),
             dbc.Col(id='sport-profile-main-icon', width='auto', className="d-flex align-items-center me-auto")
-            # Theme switch removed
         ], align="center", className="mb-3"),
 
-        # Alert section removed
 
-        # --- Selected Sport Header Row ---
         dbc.Row([
-            dbc.Col(id='selected-sport-header', width=12) # Populated by callback
+            dbc.Col(id='selected-sport-header', width=12) 
         ], id='selected-sport-banner', justify="center", align="center", className="my-4 p-3 bg-light rounded shadow"),
 
         dbc.Row([dbc.Col([dcc.Dropdown(id='sport-profile-sport-dropdown', options=SPORT_OPTIONS_NO_ALL, value=initial_sport, clearable=False)], width=12, lg=6)], justify="center", className="mb-4"),
 
-        # --- Filters Card ---
         dbc.Card(id='filter-card', children=[
             dbc.CardBody([
-             html.H5("Filters", className="card-title text-primary mb-3"), # Primary color title
+             html.H5("Filters", className="card-title text-primary mb-3"), 
              dbc.Row([
                  dbc.Col([html.Label("Season:", className="fw-bold small d-block mb-2"), dbc.RadioItems(id="sport-profile-season-radio", options=["All", "Summer", "Winter"], value="All", inline=True)], width=12, md="auto", className="mb-3 filter-col"),
                  dbc.Col([html.Label("Gender:", className="fw-bold small d-block mb-2"), dbc.RadioItems(options=["All", "M", "F"], value="All", id="sport-profile-gender-radio", inline=True)], width=12, md="auto", className="mb-3 filter-col"),
@@ -247,16 +236,12 @@ def layout(sport_name=None):
                  dbc.Col([html.Label("Year Range:", className="fw-bold small"), dcc.RangeSlider(id='sport-profile-year-slider', min=MIN_YEAR, max=MAX_YEAR, step=None, marks=year_marks, value=[MIN_YEAR, MAX_YEAR], tooltip={"placement": "bottom", "always_visible": False}, className="mt-3")], width=12, className="mb-3 filter-col")
              ], className="g-3 align-items-center")
             ])
-        # Light theme card style
         ], className="mb-4 shadow bg-light border-secondary"),
 
-        # --- Details Card (About/Rules) ---
         dbc.Row([dbc.Col(id='sport-profile-details-card', width=12, lg=10)], justify="center", className="mb-4"),
 
-        # --- Visuals Area ---
         dbc.Spinner(html.Div([
             dbc.Row([
-                # Use explicit header IDs for callback targeting
                 dbc.Col(dbc.Card(children=[dbc.CardHeader("Current Selection", id="key-metrics-header", style=card_header_style, className=f"fw-bold text-{olympic_colors[0]}"), dbc.CardBody(id="key-metrics-content")], style=card_style, className="h-100 performance-card animate-slide"), width=12, lg=4, className="mb-4"),
                 dbc.Col(dbc.Card(children=[dbc.CardHeader("Top Athletes by Medal Count", id="top-athletes-header", style=card_header_style, className=f"fw-bold text-{olympic_colors[1]}"), dbc.CardBody(id="top-athletes-graph-content", style=plot_card_body_style)], style=card_style, className="h-100 chart-card animate-slide"), width=12, lg=8, className="mb-4"),
             ], className="align-items-stretch g-4"),
@@ -278,9 +263,7 @@ def layout(sport_name=None):
         ], id='sport-profile-visuals', className="mt-4"))
     ])
 
-# --- Callback Definition (Simplified Outputs - 15 total) ---
 @callback(
-     # --- Content Areas (7) ---
      Output('key-metrics-content', 'children'),           # Enhanced content
      Output('top-athletes-graph-content', 'children'),
      Output('medal-breakdown-graph-content', 'children'),
@@ -288,18 +271,15 @@ def layout(sport_name=None):
      Output('age-graph-content', 'children'),
      Output('top-countries-graph-content', 'children'),
      Output('medals-time-graph-content', 'children'),
-     # --- Page Elements (3) ---
      Output('sport-profile-main-icon', 'children'),
      Output('selected-sport-header', 'children'),
      Output('sport-profile-details-card', 'children'),
-     # --- Event Dropdown (3) ---
      Output('sport-profile-event-dropdown', 'options'),
      Output('sport-profile-event-dropdown', 'value'),
      Output('sport-profile-event-dropdown', 'disabled'),
-     # --- Medal Country Filter (2) ---
+    
      Output({'type': 'dynamic-medal-filter', 'index': 0}, 'options'),
      Output({'type': 'dynamic-medal-filter', 'index': 0}, 'value'),
-     # --- Inputs (No Theme Input) ---
      Input('sport-profile-sport-dropdown', 'value'),
      Input('sport-profile-year-slider', 'value'),
      Input('sport-profile-gender-radio', 'value'),
@@ -309,11 +289,10 @@ def layout(sport_name=None):
      prevent_initial_call=True
 )
 def update_sport_visuals(selected_sport, selected_year_range, selected_gender, selected_event, selected_season, medal_country_value):
-    # --- Theme Settings (Hardcoded Light) ---
     text_color_class = "text-dark"
     muted_text_class = "text-muted"
     default_alert_color = "secondary"
-    primary_color = "primary" # Define primary_color
+    primary_color = "primary" 
     plotly_template = PLOTLY_TEMPLATE
     no_data_alert_class = "bg-light text-dark"
     default_alert = dbc.Alert("Loading data...", color=default_alert_color, className="m-3") # Define default_alert here
@@ -325,16 +304,12 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
     else:
         selected_sport_header_content = html.H4(selected_sport, className=f"text-center {text_color_class}")
 
-    # --- Generate Card for Sport Details ---
-    # Get Sport Description and Rules
     sport_desc_text = SPORT_DESCRIPTIONS.get(selected_sport, SPORT_DESCRIPTIONS.get("Default", "No description available."))
     sport_rules_text = SPORT_RULES.get(selected_sport, SPORT_RULES.get("Default", "Rules not available."))
     sport_wiki_link = SPORT_WIKIPEDIA.get(selected_sport, SPORT_WIKIPEDIA.get("Default", "https://en.wikipedia.org/wiki/Olympic_Games"))
     
-    # Basic Card Style
     card_style = {"backgroundColor": "#ffffff", "border": "1px solid #dee2e6"}
     
-    # Generate Card
     details_card_content = dbc.Card([
         dbc.CardHeader(f"About {selected_sport}", className=f"fw-bold text-{olympic_colors[0]}", style={"backgroundColor": "#e9ecef", "borderBottom": "1px solid #dee2e6"}),
         dbc.CardBody([
@@ -347,10 +322,9 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
         ], className=text_color_class)
     ], style=card_style, className="shadow-sm")
 
-    # --- Initializations ---
     key_metrics_content = dbc.ListGroup([
         dbc.ListGroupItem(html.Div([html.I(className="bi bi-filter me-2"), "Filters applied: None"], className="d-flex align-items-center small"))
-    ], flush=True, className="border-0") # Initial empty state
+    ], flush=True, className="border-0") 
     top_athletes_content = default_alert
     medal_breakdown_content = default_alert
     gender_content = default_alert
@@ -363,14 +337,12 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
     main_icon_emoji = SPORT_ICONS["Default"]
     medal_country_options = [{'label': DEFAULT_COUNTRY_LABEL, 'value': DEFAULT_COUNTRY_LABEL}]
 
-    # --- Process Selected Sport ---
     if selected_sport:
          main_icon_emoji = SPORT_ICONS.get(selected_sport, SPORT_ICONS["Default"])
          selected_sport_header_content = html.Div([
              html.Span(main_icon_emoji, style={'fontSize': '3rem', 'marginRight': '15px', "verticalAlign": "middle"}),
              html.H4(selected_sport, className=f"text-{primary_color} d-inline-block align-middle")
          ])
-         # Light theme styling for details card
          details_card_content = dbc.Card([
              dbc.CardHeader(f"About {selected_sport}", className=f"fw-bold text-{olympic_colors[0]}", style={"backgroundColor": "#e9ecef", "borderBottom": "1px solid #dee2e6"}),
              dbc.CardBody([
@@ -385,7 +357,6 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
 
     main_icon_element = html.Span(main_icon_emoji, style={'fontSize': '1.5rem', 'marginLeft': '10px', "verticalAlign": "middle"})
 
-    # --- Create default return tuple structure (15 items) ---
     num_outputs = 15
     return_values = [None] * num_outputs
     return_values[0:7] = [key_metrics_content, top_athletes_content, medal_breakdown_content, gender_content, age_content, top_countries_content, medals_time_content]
@@ -393,13 +364,11 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
     return_values[10:13] = [event_options, event_value, event_disabled]
     return_values[13:15] = [medal_country_options, medal_country_value]
 
-    # --- Handle No Sport Selected ---
     if not selected_sport:
         return_values[8] = None
         return_values[9] = html.Div()
         return tuple(return_values)
 
-    # --- Event Dropdown & Data Loading Checks ---
     event_value = selected_event
     if not df.empty:
         potential_events_df = df[(df['Sport'] == selected_sport) & (df['Year'] >= selected_year_range[0]) & (df['Year'] <= selected_year_range[1])]
@@ -409,7 +378,7 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
             event_options = [{'label': DEFAULT_EVENT_LABEL, 'value': DEFAULT_EVENT_LABEL}] + [{'label': ev, 'value': ev} for ev in sport_events]
             event_disabled = False
             if event_value != DEFAULT_EVENT_LABEL and event_value not in sport_events:
-                event_value = DEFAULT_EVENT_LABEL # Reset if invalid
+                event_value = DEFAULT_EVENT_LABEL 
         else:
             event_options = [{'label': "No events for filters", 'value': DEFAULT_EVENT_LABEL, 'disabled': True}]
             event_value = DEFAULT_EVENT_LABEL
@@ -423,23 +392,19 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
         return_values[10:13] = [event_options, event_value, event_disabled]
         return tuple(return_values)
 
-    # --- Try Filtering and Calculations ---
     try:
-        # --- Filter Data ---
         base_df = df[(df['Sport'] == selected_sport) & (df['Year'] >= selected_year_range[0]) & (df['Year'] <= selected_year_range[1])]
         if selected_season != "All": base_df = base_df[base_df['Season'] == selected_season]
         if selected_gender != "All": base_df = base_df[base_df['Gender'] == selected_gender]
         if event_value != DEFAULT_EVENT_LABEL and not event_disabled: base_df = base_df[base_df['Event'] == event_value]
         filtered_df = base_df.copy()
 
-        # --- Filter Context Text ---
         filters_applied = [f"Years: {selected_year_range[0]}-{selected_year_range[1]}"]
         if selected_season != "All": filters_applied.append(f"S: {selected_season}")
         if selected_gender != "All": filters_applied.append(f"G: {selected_gender}")
         if event_value != DEFAULT_EVENT_LABEL and not event_disabled: filters_applied.append(f"E: {event_value[:25] + ('...' if len(event_value)>25 else '')}")
         filter_context_text = ", ".join(filters_applied) if len(filters_applied)>1 else "All Data in Range"
 
-        # --- Update Medal Country Filter Options ---
         medal_df = filtered_df[filtered_df['Medal'] != 'None'].copy()
         current_medal_value = medal_country_value
         if not medal_df.empty and 'NOC' in medal_df.columns:
@@ -459,19 +424,16 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
         return_values[13] = medal_country_options
         return_values[14] = medal_country_value
 
-        # --- Handle No Data After Filtering ---
         if filtered_df.empty:
             no_data_alert = dbc.Alert([ html.Strong(f"No data for: {selected_sport}"), html.Br(), f"Filters: {filter_context_text}."], color="warning", className=f"{no_data_alert_class} m-3")
             return_values[0:7] = [no_data_alert] * 7
             return_values[10:13] = [event_options, event_value, event_disabled]
             return tuple(return_values)
 
-        # --- Main Calculations & Plot Generation --- #
         plot_height = 350
         no_data_msg = dbc.Alert("No Data for Selection", color=default_alert_color, className="m-3")
         if 'region' not in medal_df.columns and 'NOC' in medal_df.columns: medal_df['region'] = medal_df['NOC']
 
-        # --- Build Enhanced Key Metrics Content --- #
         num_athletes_count = filtered_df['Name'].nunique()
         num_events_count = filtered_df['Event'].nunique()
         mean_height = filtered_df['Height'].mean()
@@ -484,7 +446,6 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
         height_stats_str = f"{min_height:.1f} / {mean_height:.1f} / {max_height:.1f} cm" if pd.notna(mean_height) else "N/A"
         weight_stats_str = f"{min_weight:.1f} / {mean_weight:.1f} / {max_weight:.1f} kg" if pd.notna(mean_weight) else "N/A"
 
-        # Get top athletes from medal_df
         top_athletes_list_items = [dbc.ListGroupItem("N/A", className="p-1 small border-0")]
         if not medal_df.empty:
             top_athletes_names = medal_df.groupby('Name')['Medal'].count().nlargest(3).reset_index()
@@ -501,10 +462,8 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
             dbc.ListGroupItem([html.I(className="bi bi-rulers me-2"), html.Strong("Height (Min/Avg/Max): "), html.Span(height_stats_str, className="ms-auto")], className="d-flex justify-content-between align-items-center small border-0"),
             dbc.ListGroupItem([html.I(className="bi bi-universal-access me-2"), html.Strong("Weight (Min/Avg/Max): "), html.Span(weight_stats_str, className="ms-auto")], className="d-flex justify-content-between align-items-center small border-0"),
             dbc.ListGroupItem([html.I(className="bi bi-trophy-fill me-2"), html.Strong("Most Decorated:"), dbc.ListGroup(top_athletes_list_items, flush=True, className="ms-2 border-0")], className="d-flex flex-column small border-0 pt-2")
-        ], flush=True, className="border-0") # Flush to remove outer borders, border-0 for items
+        ], flush=True, className="border-0") 
 
-        # --- Plot Generation (Light Theme) --- #
-        # Top Athletes
         top_athletes_content = no_data_msg
         athlete_country_col = 'NOC'
         if not medal_df.empty and 'Name' in medal_df.columns and athlete_country_col in medal_df.columns:
@@ -514,7 +473,6 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
                 fig_ath.update_layout(xaxis_title="", yaxis_title="Total Medals", title=None, showlegend=False, margin=dict(t=10, b=10))
                 top_athletes_content = dcc.Graph(figure=fig_ath, config={'displayModeBar': False})
 
-        # Medal Breakdown Content
         medal_breakdown_content = no_data_msg
         medal_df_for_dist = medal_df.copy()
         if medal_country_value != DEFAULT_COUNTRY_LABEL and 'NOC' in medal_df_for_dist.columns:
@@ -525,7 +483,6 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
             fig_med.update_layout(showlegend=False, title=None, yaxis_title="Count", xaxis_title=None, margin=dict(t=10, b=10))
             medal_breakdown_content = dcc.Graph(figure=fig_med, config={'displayModeBar': False})
 
-        # Gender Distribution Content
         gender_content = no_data_msg
         gender_counts = filtered_df.drop_duplicates(subset=['Name'])['Gender'].value_counts()
         if selected_gender == "All" and not gender_counts.empty and len(gender_counts) > 1:
@@ -537,7 +494,6 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
              single_gender = gender_counts.index[0] if len(gender_counts) == 1 else selected_gender
              gender_content = dbc.Alert(f"Displaying only {single_gender} athletes based on filter.", color=default_alert_color, className="m-3")
 
-        # Age Distribution Content
         age_content = no_data_msg
         age_data = filtered_df['Age'].dropna()
         if not age_data.empty:
@@ -545,7 +501,6 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
             fig_age.update_layout(title=None, yaxis_title="Count", xaxis_title="Age", bargap=0.1, margin=dict(t=10, b=10))
             age_content = dcc.Graph(figure=fig_age, config={'displayModeBar': False})
 
-        # Top Countries Content
         top_countries_content = no_data_msg
         country_col = 'region' if 'region' in medal_df.columns else 'NOC'
         if country_col in medal_df.columns and not medal_df.empty:
@@ -555,7 +510,6 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
                 fig_cntry.update_layout(xaxis_title="", yaxis_title="Total Medals", title=None, margin=dict(t=10, b=10))
                 top_countries_content = dcc.Graph(figure=fig_cntry, config={'displayModeBar': False})
 
-        # Medals Over Time Content
         medals_time_content = no_data_msg
         if not medal_df.empty and 'Year' in medal_df.columns:
              medals_over_time = medal_df.groupby('Year')['Medal'].count().reset_index()
@@ -567,11 +521,9 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
              elif not medals_over_time.empty:
                  medals_time_content = dbc.Alert("Need data for multiple years to show trend.", color=default_alert_color, className="m-3")
 
-        # --- Assign final calculated values to return tuple --- #
         return_values[0:7] = [key_metrics_content, top_athletes_content, medal_breakdown_content, gender_content, age_content, top_countries_content, medals_time_content]
         return_values[7:10] = [main_icon_element, selected_sport_header_content, details_card_content]
         return_values[10:13] = [event_options, event_value, event_disabled]
-        # Medal options/value already assigned
         return tuple(return_values)
 
     except Exception as e:

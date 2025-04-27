@@ -12,20 +12,15 @@ from dash.dependencies import ClientsideFunction
 
 dash.register_page(__name__, name='Globe View')
 
-# Preprocess the medal data
 def get_medal_counts():
-    # Calculate total athletes per country
     total_athletes = df.groupby('NOC').size().reset_index(name='total_athletes')
     
-    # Filter medals and deduplicate to count each event medal only once
     medals_df = df[df['Medal'] != 'None'].copy()
     
-    # Get unique medals by country (deduplicated by event)
     unique_event_medals = medals_df.drop_duplicates(
         subset=['Year', 'Season', 'Event', 'Medal', 'NOC']
     )
     
-    # Create medal summary for hover text
     medal_summary = unique_event_medals.groupby('NOC').apply(
         lambda x: f"Gold: {sum(x['Medal'] == 'Gold')}<br>"
                  f"Silver: {sum(x['Medal'] == 'Silver')}<br>"
@@ -33,20 +28,16 @@ def get_medal_counts():
                  f"Total Medals: {len(x)}"
     ).reset_index(name='Medal')
     
-    # Calculate total medal points using the weighted system
     medal_points = unique_event_medals.groupby('NOC').apply(
         lambda x: sum(x['Medal'].map({'Gold': 4, 'Silver': 2, 'Bronze': 1}))
     ).reset_index(name='total_points')
     
-    # Merge medal summary with point calculation
     medal_data = medal_summary.merge(medal_points, on='NOC', how='left')
     
-    # Merge with total athletes
     medal_data = medal_data.merge(total_athletes, on='NOC', how='right')
     medal_data['total_points'] = medal_data['total_points'].fillna(0)
     medal_data['total_athletes'] = medal_data['total_athletes'].fillna(0)
     
-    # Calculate efficiency
     medal_data['efficiency'] = medal_data['total_points'] / medal_data['total_athletes']
     medal_data['efficiency'] = medal_data['efficiency'].fillna(0)
     
@@ -54,7 +45,6 @@ def get_medal_counts():
 
 # Create the layout
 layout = dbc.Container([
-    # --- Hero Section ---
     dbc.Row([
         dbc.Col([
             html.Div([
@@ -65,7 +55,6 @@ layout = dbc.Container([
         ], width=12)
     ], className="mb-4"),
 
-    # --- Description ---
     dbc.Row([
         dbc.Col([
             html.P("Interact with the 3D globe to explore Olympic medal efficiency across countries. Click on a country to view its detailed profile.", 
@@ -97,7 +86,6 @@ layout = dbc.Container([
 def update_globe(_):
     medal_data = get_medal_counts()
     
-    # Create the choropleth trace
     fig = go.Figure(data=go.Choropleth(
         locations=medal_data['NOC'],
         z=medal_data['efficiency'],
@@ -113,7 +101,6 @@ def update_globe(_):
         customdata=medal_data[['total_athletes']].values
     ))
 
-    # Update the layout to show a 3D globe
     fig.update_layout(
         geo=dict(
             showframe=False,
@@ -132,7 +119,6 @@ def update_globe(_):
         height=800
     )
 
-    # Add buttons for rotation
     fig.update_layout(
         updatemenus=[{
             'buttons': [
@@ -161,7 +147,6 @@ def update_globe(_):
 
     return fig
 
-# Callback to handle clicks and update the clicked country
 @callback(
     [Output('clicked-country', 'data'),
      Output('url', 'pathname')],
@@ -171,5 +156,5 @@ def update_clicked_country(clickData):
     if clickData is None:
         raise PreventUpdate
     country = clickData['points'][0]['location']
-    print(f"Selected country: {country}")  # Debug print
+    print(f"Selected country: {country}")  
     return country, '/country-profile'

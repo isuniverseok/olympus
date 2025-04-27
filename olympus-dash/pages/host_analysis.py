@@ -85,7 +85,6 @@ def get_host_data():
 
 # Create the layout
 layout = dbc.Container([
-    # --- Hero Section ---
     dbc.Row([
         dbc.Col([
             html.Div([
@@ -96,7 +95,6 @@ layout = dbc.Container([
         ], width=12)
     ], className="mb-4"),
 
-    # --- Description ---
     dbc.Row([
         dbc.Col([
             html.P("This section analyzes the 'Home Field Advantage' by comparing host nations' performance during hosting years versus previous and subsequent games.", 
@@ -104,7 +102,6 @@ layout = dbc.Container([
         ], width=12)
     ]),
     
-    # Host Country Selection
     dbc.Row([
         dbc.Col([
             html.Label("Select Host Country:", className="fw-bold"),
@@ -119,7 +116,6 @@ layout = dbc.Container([
     ]),
     html.Hr(),
     
-    # Visualization Area
     dbc.Spinner(
         html.Div(id='host-analysis-visuals')
     )

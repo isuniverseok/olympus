@@ -4,42 +4,37 @@ from dash import html, dcc, dash_table, callback, Input, Output, State
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
-import pandas as pd # Import pandas
-import os # Import os for path checking
-# Updated import
+import pandas as pd 
+import os 
+
 from data_loader import df, YEAR_OPTIONS_NO_ALL, get_default_value, DEFAULT_DROPDOWN_LABEL
-# Imports for Word Cloud
 import io
 import base64
 try:
     from wordcloud import WordCloud
-    import matplotlib # Often needed implicitly by wordcloud
-    from PIL import Image # Needed for image conversion
+    import matplotlib 
+    from PIL import Image 
     WORDCLOUD_INSTALLED = True
 except ImportError:
     WORDCLOUD_INSTALLED = False
     print("Word Cloud libraries not installed. Skipping word cloud generation.")
-    # Define dummy WordCloud class if not installed to avoid NameError later
     class WordCloud:
         def __init__(self, **kwargs): pass
         def generate_from_frequencies(self, frequencies): return self
-        def to_image(self): return None # Or return a placeholder PIL image if needed
+        def to_image(self): return None 
 
 dash.register_page(__name__, name='Olympic Year')
 
 # Placeholder for when image is not found or applicable
-# Use the path to the generic olympic logo as the fallback
 PLACEHOLDER_IMAGE = '/assets/imgs/olympic_logo.png' 
-# Base path for images within the assets folder
 IMAGE_BASE_PATH = 'assets/imgs'
 
-# Use helper for default year
+
 default_year = get_default_value(YEAR_OPTIONS_NO_ALL)
 
-# Define default season value (options will be dynamic)
+
 default_season = DEFAULT_DROPDOWN_LABEL
 
-# Modern styling constants
 card_style = {
     "backgroundColor": "#ffffff",
     "border": "none",
@@ -55,7 +50,6 @@ card_hover_style = {
     "boxShadow": "0 8px 15px rgba(0,0,0,0.1)"
 }
 
-# Dashboard container style
 dashboard_style = {
     "width": "100%",
     "overflowX": "hidden",
@@ -64,7 +58,7 @@ dashboard_style = {
 }
 
 layout = html.Div([
-    # --- Hero Section ---
+    
     dbc.Row([
         dbc.Col([
             html.Div([
@@ -78,9 +72,7 @@ layout = html.Div([
         ], width=12)
     ], className="mb-4"),
 
-    # Main content container
     html.Div([
-        # --- Description ---
         dbc.Row([
             dbc.Col([
                 dbc.Card([
@@ -92,13 +84,12 @@ layout = html.Div([
             ], width=12)
         ], className="mb-4"),
 
-        # --- Filters Section ---
+        
         dbc.Row([
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
                         dbc.Row([
-                            # Year Dropdown Column
                             dbc.Col([
                                 html.Label("Select Year:", className="fw-bold mb-2"),
                                 dcc.Dropdown(
@@ -113,7 +104,6 @@ layout = html.Div([
                                 )
                             ], width=12, md=6, lg=4, className="mb-3 mb-md-0"),
 
-                            # Season Dropdown Column
                             dbc.Col([
                                 html.Label("Select Season:", className="fw-bold mb-2"),
                                 dcc.Dropdown(
@@ -132,9 +122,7 @@ layout = html.Div([
             ], width=12)
         ], className="mb-4"),
 
-        # --- Images and Summary Section ---
         dbc.Row([
-            # Column for Emblem Image
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
@@ -145,10 +133,8 @@ layout = html.Div([
                 ], style=card_style)
             ], width=12, md=3, className="mb-3"),
             
-            # Column for Summary Card
             dbc.Col(id='olympic-year-summary-col', width=12, md=6, className="mb-3"),
             
-            # Column for Mascot Image
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
@@ -160,14 +146,11 @@ layout = html.Div([
             ], width=12, md=3, className="mb-3"),
         ], className="mb-4"),
 
-        # --- Data Table Section ---
         dbc.Row([
             dbc.Col([
                 dbc.Card([
                     dbc.CardBody([
-                        # Search and Page Size controls
                         dbc.Row([
-                            # Column for Page Size Selector
                             dbc.Col([
                                 dbc.Form([
                                     dbc.RadioItems(
@@ -187,7 +170,6 @@ layout = html.Div([
                                 )
                             ], width="auto"),
 
-                            # Column for Search Input
                             dbc.Col([
                                 dbc.Input(
                                     id="medal-table-search-input",
@@ -202,7 +184,6 @@ layout = html.Div([
                             )
                         ], justify="between", align="center", className="mb-3"),
 
-                        # Spinner for the table
                         dbc.Spinner(
                             html.Div(id='olympic-year-details', 
                                    style={'maxHeight': '600px', 'overflowY': 'auto'})
@@ -214,11 +195,11 @@ layout = html.Div([
 
     ], className="px-3"),
 
-    # Hidden stores
+    
     dcc.Store(id='medal-table-full-data-store'),
 ], id='olympic-year-page-container')
 
-# -- NEW CALLBACK: Update Season Dropdown based on Year --
+
 @callback(
     Output('olympic-year-season-dropdown', 'options'),
     Output('olympic-year-season-dropdown', 'value'),
@@ -226,65 +207,55 @@ layout = html.Div([
 )
 def update_season_options(selected_year):
     if not selected_year or df.empty:
-        # No year selected or data not loaded, return empty/default
-        return [], None # Return empty options and None value
+        return [], None 
 
-    # Find seasons available for the selected year
     available_seasons = df[df['Year'] == selected_year]['Season'].unique().tolist()
 
-    # Create dynamic options (WITHOUT "All")
     dynamic_options = []
     if 'Summer' in available_seasons:
         dynamic_options.append({'label': 'Summer', 'value': 'Summer'})
     if 'Winter' in available_seasons:
         dynamic_options.append({'label': 'Winter', 'value': 'Winter'})
 
-    # Set default value based on availability
     new_season_value = None
     if 'Summer' in available_seasons:
-        new_season_value = 'Summer' # Default to Summer if available
+        new_season_value = 'Summer'
     elif 'Winter' in available_seasons:
         new_season_value = 'Winter' # Default to Winter if only Winter is available
     # If neither, new_season_value remains None
 
     return dynamic_options, new_season_value
 
-# Function to generate image path and check existence
 def get_image_path(image_type, city, year):
     print(f"[Debug] get_image_path called with: type={image_type}, city={city}, year={year}") # Debug
     if not city or pd.isna(city):
-        print("[Debug] City is None or NaN") # Debug
+        print("[Debug] City is None or NaN") 
         return PLACEHOLDER_IMAGE
-    # Format city name: lowercase, replace spaces and underscores with hyphens
     city_slug = str(city).lower().replace(' ', '-').replace('_', '-')
-    # Handle specific known cases like st. moritz or salt lake
     city_slug = city_slug.replace('st.-moritz', 'st_moritz')
     city_slug = city_slug.replace('salt-lake-city', 'salt_lake')
     city_slug = city_slug.replace('cortina-d\'ampezzo','cortina_d_ampezzo')
     city_slug = city_slug.replace('garmisch-partenkirchen','garmisch_p')
     city_slug = city_slug.replace('squaw-valley','squaw_valley')
-    print(f"[Debug] Generated city_slug: {city_slug}") # Debug
+    print(f"[Debug] Generated city_slug: {city_slug}") 
 
     filename = f"{city_slug}-{year}.png"
     relative_path = f"{IMAGE_BASE_PATH}/olympic_{image_type}/{filename}"
-    print(f"[Debug] Checking relative_path: {relative_path}") # Debug
+    print(f"[Debug] Checking relative_path: {relative_path}") 
 
     # Check relative to the app's assumed root directory
     full_path_to_check = relative_path
-    print(f"[Debug] Checking existence of: {full_path_to_check}") # Debug
+    print(f"[Debug] Checking existence of: {full_path_to_check}") 
     exists = os.path.exists(full_path_to_check)
-    print(f"[Debug] os.path.exists result: {exists}") # Debug
+    print(f"[Debug] os.path.exists result: {exists}") 
     
     if exists:
-        print(f"[Debug] Image found! Returning path with leading slash: /{relative_path}") # Debug
-        return f"/{relative_path}" # Return path with leading slash for browser
+        print(f"[Debug] Image found! Returning path with leading slash: /{relative_path}") 
+        return f"/{relative_path}" 
     else:
-        # Fallback check (if needed, currently commented out)
-        # ...
-        print(f"[Debug] Image NOT found.") # Debug
+        print(f"[Debug] Image NOT found.") 
         return PLACEHOLDER_IMAGE
 
-# -- EXISTING CALLBACK: Update Visuals based on Year and Season --
 @callback(
     Output('olympic-year-summary-col', 'children'),
     Output('olympic-year-details', 'children'),
@@ -293,14 +264,13 @@ def get_image_path(image_type, city, year):
     Output('page-size-selector-form-id', 'style'),
     Output('medal-table-search-form', 'style'),
     Output('medal-table-full-data-store', 'data'),
-    Output('olympic-year-page-container', 'style'),  # Add output for page background style
+    Output('olympic-year-page-container', 'style'),  
     Input('olympic-year-year-dropdown', 'value'),
     Input('olympic-year-season-dropdown', 'value'),
     Input('medal-table-page-size-selector', 'value')
 )
 def update_year_visuals(selected_year, selected_season, selected_page_size):
     print(f"\n[Debug] update_year_visuals triggered: year={selected_year}, season={selected_season}, page_size={selected_page_size}")
-    # Initialize outputs
     summary_card_content = []
     details_content = []
     emblem_src = PLACEHOLDER_IMAGE
@@ -308,33 +278,26 @@ def update_year_visuals(selected_year, selected_season, selected_page_size):
     selector_style = {'display': 'none'}
     search_style = {'display': 'none'}
     full_medal_data_for_store = []
-    page_background_style = {} # Default empty style
+    page_background_style = {} 
 
     if not selected_year or df.empty:
         summary_card_content = [html.P("Please select an Olympic year...")]
-        # Ensure all outputs get a default value
         return summary_card_content, details_content, emblem_src, mascot_src, selector_style, search_style, full_medal_data_for_store, page_background_style
 
-    # --- Determine effective season and city for image lookup ---
     year_df_all_seasons = df[df['Year'] == selected_year]
     available_seasons = year_df_all_seasons['Season'].unique().tolist()
     effective_season = None
     city_for_image = None
-    # Determine effective season based on dropdown selection AND availability for the year
     if selected_season in available_seasons:
         effective_season = selected_season
-    # (Handle case where selected_season might be None initially or if year changes before season updates)
     elif not selected_season and len(available_seasons) == 1:
          effective_season = available_seasons[0]
-    # Add a fallback if selection invalid somehow, maybe default to first available?
     elif not effective_season and available_seasons: 
-         effective_season = available_seasons[0] # Fallback logic
+         effective_season = available_seasons[0] 
 
-    # Determine background IMAGE with opacity overlay based on effective_season
     overlay_opacity = 0.7
     white_overlay = f'linear-gradient(rgba(255, 255, 255, {overlay_opacity}), rgba(255, 255, 255, {overlay_opacity}))'
 
-    # Base style properties (common)
     base_bg_style = {
         'background-position': 'center center',
         'background-repeat': 'no-repeat',
@@ -345,16 +308,15 @@ def update_year_visuals(selected_year, selected_season, selected_page_size):
     if effective_season == 'Summer':
         page_background_style = {
             **base_bg_style,
-            'background-size': 'cover', # Keep cover for summer
+            'background-size': 'cover', 
             'background': f'{white_overlay}, url("/assets/imgs/summer_bg.jpg")',
         }
     elif effective_season == 'Winter':
         page_background_style = {
             **base_bg_style,
-            'background-size': 'contain', # Change to contain for winter
+            'background-size': 'contain', 
             'background': f'{white_overlay}, url("/assets/imgs/winter_bg.png")',
         }
-    # else: page_background_style remains {} (default background)
 
     if effective_season:
         season_df = year_df_all_seasons[year_df_all_seasons['Season'] == effective_season]
@@ -364,7 +326,6 @@ def update_year_visuals(selected_year, selected_season, selected_page_size):
             emblem_src = get_image_path('emblems', city_for_image, selected_year)
             mascot_src = get_image_path('mascots', city_for_image, selected_year)
 
-    # --- Filter data for stats and table ---
     year_df_filtered = year_df_all_seasons
     if effective_season:
         year_df_filtered = year_df_all_seasons[year_df_all_seasons['Season'] == effective_season]
@@ -373,23 +334,17 @@ def update_year_visuals(selected_year, selected_season, selected_page_size):
     if year_df.empty:
         season_text = f" ({effective_season})" if effective_season else ""
         summary_card_content = [html.P(f"No data found for the year {selected_year}{season_text}.")]
-        # Ensure all outputs get a default value, including background
         return summary_card_content, details_content, emblem_src, mascot_src, selector_style, search_style, full_medal_data_for_store, page_background_style
 
-    # --- Calculations & Components ---
     host_city = year_df['City'].mode()[0] if not year_df.empty and not year_df['City'].mode().empty else "N/A"
     game_season_display = effective_season if effective_season else "All Seasons"
 
-    # Calculate base stats
     num_countries = year_df['NOC'].nunique()
-    # Calculate total unique athletes
     num_athletes = year_df['Name'].nunique()
     num_sports = year_df['Sport'].nunique()
     num_events = year_df['Event'].nunique()
 
-    # REMOVED: Gender breakdown calculation
-
-    # Reverted Summary Card Content (4 stats)
+  
     summary_card = dbc.Card(dbc.CardBody([
         html.H4(f"{host_city} {int(selected_year)} {game_season_display} Overview", className="card-title text-center mb-4"),
         dbc.Row([
@@ -421,10 +376,9 @@ def update_year_visuals(selected_year, selected_season, selected_page_size):
     ]), color="light", className="shadow border-light h-100")
     summary_card_content = [summary_card]
 
-    # 2. Medal Table Calculation
     medals_df = year_df[year_df['Medal'] != 'None'].copy()
     medal_table_component = None
-    word_cloud_component = None # Initialize word cloud component
+    word_cloud_component = None 
 
     if not medals_df.empty:
         unique_event_medals = medals_df.drop_duplicates(
@@ -441,11 +395,9 @@ def update_year_visuals(selected_year, selected_season, selected_page_size):
         medal_table_df.insert(0, 'Rank', range(1, 1 + len(medal_table_df)))
         full_medal_data_for_store = medal_table_df.to_dict('records') # Prepare data for store
 
-        # --- Word Cloud Generation ---
         word_cloud_image_src = None
         if WORDCLOUD_INSTALLED and not medal_table_df.empty:
             try:
-                # Create frequency dictionary: {Country: Total Medals}
                 medal_frequencies = medal_table_df.set_index('region')[['Total']].to_dict()['Total']
 
                 if medal_frequencies:
@@ -453,23 +405,21 @@ def update_year_visuals(selected_year, selected_season, selected_page_size):
                         background_color="white",
                         width=800,
                         height=400,
-                        colormap='viridis', # Example colormap
-                        max_words=100, # Limit number of words
+                        colormap='viridis', 
+                        max_words=100, 
                         contour_width=1,
                         contour_color='steelblue'
                     ).generate_from_frequencies(medal_frequencies)
 
-                    # Convert to image bytes
                     img_byte_arr = io.BytesIO()
-                    wc_image = wc.to_image() # Get PIL image
+                    wc_image = wc.to_image()
                     if wc_image: 
                         wc_image.save(img_byte_arr, format='PNG')
                         img_byte_arr.seek(0)
-                        # Encode as base64
                         word_cloud_image_src = f"data:image/png;base64,{base64.b64encode(img_byte_arr.getvalue()).decode()}"
             except Exception as e:
                 print(f"Error generating word cloud: {e}")
-                word_cloud_image_src = None # Ensure it's None on error
+                word_cloud_image_src = None 
 
         if word_cloud_image_src:
             word_cloud_component = dbc.Card([
@@ -477,10 +427,8 @@ def update_year_visuals(selected_year, selected_season, selected_page_size):
                 dbc.CardBody(
                     html.Img(src=word_cloud_image_src, style={'width': '100%', 'height': 'auto'})
                 )
-            ], color="light", className="shadow border-light mt-4") # Add margin top
-        # --- End Word Cloud --- 
+            ], color="light", className="shadow border-light mt-4") 
         
-        # Determine actual page size
         actual_page_size = selected_page_size
 
         medal_table = dash_table.DataTable(
@@ -512,31 +460,26 @@ def update_year_visuals(selected_year, selected_season, selected_page_size):
             dbc.CardBody(medal_table)
         ], color="light", className="shadow border-light")
 
-        # Set details content - Add word cloud if available
+        
         details_content = [medal_table_component]
         if word_cloud_component:
             details_content.append(word_cloud_component)
 
-        # Make the selectors visible
         selector_style = {'display': 'flex', 'justify-content': 'end', 'margin-top': '0.5rem'}
         search_style = {'display': 'block', 'max-width': '300px'}
     else:
-        # If no medal data, set alert and keep selectors hidden
         details_content = [dbc.Alert("No medal data available for this selection.", color="warning", className="mb-4")]
         selector_style = {'display': 'none'}
         search_style = {'display': 'none'}
-        full_medal_data_for_store = [] # Ensure store is empty if no medals
+        full_medal_data_for_store = [] 
 
-    # Final check for content
     if not details_content:
         details_content = [dbc.Alert("No specific details to display for this selection.", color="info", className="mb-4")]
         selector_style = {'display': 'none'}
         search_style = {'display': 'none'}
 
-    # Return all outputs including the updated background style
     return summary_card_content, details_content, emblem_src, mascot_src, selector_style, search_style, full_medal_data_for_store, page_background_style
 
-# New callback for filtering
 @callback(
     Output('medal-data-table', 'data'),
     Input('medal-table-search-input', 'value'),

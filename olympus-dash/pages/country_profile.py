@@ -5,10 +5,8 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
 from dash.exceptions import PreventUpdate
-# Updated import to use helpers from data_loader
 from data_loader import df, NOC_OPTIONS_NO_ALL, get_default_value
 import pandas as pd
-# NEW Import for Word Cloud
 from wordcloud import WordCloud
 
 dash.register_page(__name__, name='Country Profile')
@@ -271,7 +269,6 @@ layout = dbc.Container([
         dbc.Col([
             dbc.Card([
                 dbc.CardBody([
-                    # Country Selection
                     html.Div([
                         html.H5("Select Country", className="text-primary mb-3"),
             dcc.Dropdown(
@@ -283,14 +280,12 @@ layout = dbc.Container([
                         ),
                     ], className="country-selector text-center"),
                     
-                    # Country Info (only shown after selection)
                     html.Div(id='country-header-section', className="country-info text-center")
                 ])
             ], className="country-card")
         ], width=12, lg=8, className="mx-auto")
     ], className="mb-5"),
     
-    # Main Content Area with Spinner
     dbc.Spinner(
         html.Div(id='country-profile-visuals'),
         color="primary",
@@ -299,7 +294,6 @@ layout = dbc.Container([
         spinner_style={"width": "3rem", "height": "3rem"}
     ),
     
-    # Hidden Stores
     dcc.Store(id='clicked-country', data=None, storage_type='session'),
     dcc.Input(id='top-n-sports-input', value=10, type='number', style={'display': 'none'})
 ], fluid=True, className="px-4 py-3")
@@ -321,7 +315,7 @@ def update_dropdown_from_globe(country):
 @callback(
     [Output('country-profile-visuals', 'children'),
      Output('country-header-section', 'children'),
-     Output('country-profile-visuals', 'className')],  # Add className output
+     Output('country-profile-visuals', 'className')], 
     [Input('country-profile-noc-dropdown', 'value'),
      Input('top-n-sports-input', 'value')]
 )
@@ -356,7 +350,6 @@ def update_country_visuals(selected_noc, n_sports):
             last_appearance = country_df['Year'].max()
             num_olympics = country_df['Games'].nunique()
             layout_no_medals = html.Div([
-                # No Medals Alert with modern styling
                 dbc.Row([
                     dbc.Col([
                         dbc.Alert([
@@ -366,7 +359,7 @@ def update_country_visuals(selected_noc, n_sports):
                     ], width=12, className="mb-4")
                 ]),
                 
-                # Participation Summary Card
+                
                 dbc.Row([
                     dbc.Col([
                         dbc.Card([
@@ -393,7 +386,7 @@ def update_country_visuals(selected_noc, n_sports):
             ])
             return layout_no_medals, header_content, "trigger-animation"
 
-        # --- Calculations & Components --- 
+
         medal_df = country_df[country_df['Medal'] != 'None'].copy()
 
         unique_event_medals_country = pd.DataFrame()
@@ -402,11 +395,11 @@ def update_country_visuals(selected_noc, n_sports):
                     subset=['Year', 'Season', 'Event', 'Medal']
             )
 
-        # --- Medal & Participation Calculations --- 
+        
         total_medals = len(unique_event_medals_country)
         medal_counts = unique_event_medals_country['Medal'].value_counts().reindex(['Gold', 'Silver', 'Bronze'], fill_value=0) if not unique_event_medals_country.empty else pd.Series(0, index=['Gold', 'Silver', 'Bronze'])
 
-        # --- Create Modern Layout ---
+        
         layout_content = html.Div([
             # Overall Performance Cards
             dbc.Row([

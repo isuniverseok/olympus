@@ -18,28 +18,22 @@ from sklearn.preprocessing import MinMaxScaler
 import re
 from plotly.subplots import make_subplots
 
-# Register the page
+
 dash.register_page(__name__, name='More Analysis')
 
-# Make sure we have data
 try:
-    # Try to get data with medals
     df_with_medals = olympic_df[olympic_df['Medal'] != 'None']
     
-    # Convert height and weight to numeric, handling errors
     olympic_df['Height'] = pd.to_numeric(olympic_df['Height'], errors='coerce')
     olympic_df['Weight'] = pd.to_numeric(olympic_df['Weight'], errors='coerce')
     olympic_df['Age'] = pd.to_numeric(olympic_df['Age'], errors='coerce')
     
-    # Create a Year range for filtering - convert to standard Python ints
     years = sorted([int(year) for year in olympic_df['Year'].unique()])
     min_year = int(min(years))
     max_year = int(max(years))
     
-    # Get list of sports for dropdown
     sports_list = sorted(olympic_df['Sport'].unique())
     
-    # Get list of seasons for filtering
     seasons = ['Summer', 'Winter']
     
 except Exception as e:
@@ -51,18 +45,15 @@ except Exception as e:
     sports_list = []
     seasons = []
 
-# Constants for styling
 PLOTLY_TEMPLATE = "plotly_white"
 olympic_colors = ["primary", "warning", "info", "success", "danger"]
 card_style = {"backgroundColor": "#ffffff", "border": "1px solid #dee2e6"}
 card_header_style = {"backgroundColor": "#e9ecef", "fontWeight": "600", "borderBottom": "1px solid #dee2e6"}
 plot_card_body_style = {"padding": "0.5rem"}
 
-# Advanced analysis functions
 def create_medal_trend_chart(filtered_df, n_countries=10):
     """Create a line chart showing medal trends for top countries over time"""
     if filtered_df.empty:
-        # Return empty figure with text if no data
         fig = go.Figure()
         fig.update_layout(
             title="No data available for the selected filters",
@@ -72,37 +63,28 @@ def create_medal_trend_chart(filtered_df, n_countries=10):
         return fig
         
     try:
-        # CRITICAL FIX: Use exactly the same counting logic as in olympic_year.py
-        # First, filter to only rows with medals
         medals_df = filtered_df[filtered_df['Medal'] != 'None'].copy()
         
         if not medals_df.empty:
-            # Create a unique identifier for each medal event to handle team sports correctly
-            # Each team medal should count as ONE medal per country
             medals_df['medal_key'] = medals_df['Year'].astype(str) + '_' + \
                                     medals_df['Season'] + '_' + \
                                     medals_df['Event'] + '_' + \
                                     medals_df['Medal']
             
-            # Get one row per country-medal by dropping duplicates
             unique_medals = medals_df.drop_duplicates(subset=['medal_key', 'region'])
             
-            # Get top countries by total medal count
             country_totals = unique_medals.groupby('region').size().nlargest(n_countries)
             top_countries = country_totals.index.tolist()
             
-            # Prepare data for line chart
             all_years = sorted(filtered_df['Year'].unique())
             medal_data = []
             
             for country in top_countries:
                 country_medals = unique_medals[unique_medals['region'] == country]
                 
-                # Count medals per year
                 yearly_medals = country_medals.groupby('Year').size().reset_index(name='MedalCount')
                 yearly_medals['region'] = country
                 
-                # Ensure all years have data points (for continuous lines)
                 year_df = pd.DataFrame({'Year': all_years})
                 complete_df = pd.merge(year_df, yearly_medals, on='Year', how='left')
                 complete_df['region'].fillna(country, inplace=True)
@@ -110,13 +92,11 @@ def create_medal_trend_chart(filtered_df, n_countries=10):
                 
                 medal_data.append(complete_df)
                 
-            # Combine all countries' data
             if medal_data:
                 medal_counts = pd.concat(medal_data)
                 medal_counts['Year'] = medal_counts['Year'].astype(int)
                 medal_counts['MedalCount'] = medal_counts['MedalCount'].astype(int)
                 
-                # Create line chart
                 fig = px.line(
                     medal_counts,
                     x='Year',
@@ -165,7 +145,6 @@ def create_medal_trend_chart(filtered_df, n_countries=10):
 def create_sport_heatmap(filtered_df):
     """Create a heatmap showing the relationships between sports and physical attributes"""
     if filtered_df.empty:
-        # Return empty figure with text if no data
         fig = go.Figure()
         fig.update_layout(
             title="No data available for the selected filters",
@@ -175,21 +154,17 @@ def create_sport_heatmap(filtered_df):
         return fig
         
     try:
-        # Get top 15 sports by participation
         top_sports = filtered_df.groupby('Sport').size().nlargest(15).index.tolist()
         df_for_heatmap = filtered_df[filtered_df['Sport'].isin(top_sports)]
         
-        # Calculate mean values for Age, Height, Weight
         sport_attributes = df_for_heatmap.groupby('Sport').agg({
             'Age': 'mean',
             'Height': 'mean',
             'Weight': 'mean'
         }).reset_index()
         
-        # Calculate BMI
         sport_attributes['BMI'] = sport_attributes['Weight'] / ((sport_attributes['Height']/100) ** 2)
         
-        # Create heatmap
         if not sport_attributes.empty:
             fig = px.imshow(
                 sport_attributes.set_index('Sport')[['Age', 'Height', 'Weight', 'BMI']],
@@ -206,7 +181,6 @@ def create_sport_heatmap(filtered_df):
             )
             return fig
         else:
-            # Not enough data
             fig = go.Figure()
             fig.update_layout(
                 title="Not enough data for heatmap with current filters",
@@ -215,7 +189,6 @@ def create_sport_heatmap(filtered_df):
             )
             return fig
     except Exception as e:
-        # Return empty figure with error message
         fig = go.Figure()
         fig.update_layout(
             title=f"Error creating chart: {str(e)}",
@@ -227,7 +200,6 @@ def create_sport_heatmap(filtered_df):
 def create_age_evolution_chart(filtered_df):
     """Create a visualization of athlete age evolution over Olympic history"""
     if filtered_df.empty:
-        # Return empty figure with text if no data
         fig = go.Figure()
         fig.update_layout(
             title="No data available for the selected filters",
@@ -237,24 +209,18 @@ def create_age_evolution_chart(filtered_df):
         return fig
         
     try:
-        # Filter out invalid ages
         df_with_age = filtered_df[filtered_df['Age'].notna()]
         
-        # Group by year and calculate age statistics
         age_stats = df_with_age.groupby('Year').agg({
             'Age': ['mean', 'median', 'min', 'max']
         }).reset_index()
         
-        # Flatten multi-index columns
         age_stats.columns = ['Year', 'Mean Age', 'Median Age', 'Youngest', 'Oldest']
         
-        # Convert Year to int to avoid serialization issues
         age_stats['Year'] = age_stats['Year'].astype(int)
         
-        # Create line chart for age trends
         fig = go.Figure()
         
-        # Add mean age line
         fig.add_trace(go.Scatter(
             x=age_stats['Year'],
             y=age_stats['Mean Age'],
@@ -263,7 +229,6 @@ def create_age_evolution_chart(filtered_df):
             line=dict(color='royalblue', width=3)
         ))
         
-        # Add median age line
         fig.add_trace(go.Scatter(
             x=age_stats['Year'],
             y=age_stats['Median Age'],
@@ -272,7 +237,6 @@ def create_age_evolution_chart(filtered_df):
             line=dict(color='firebrick', width=3)
         ))
         
-        # Add age range as a filled area
         fig.add_trace(go.Scatter(
             x=age_stats['Year'],
             y=age_stats['Oldest'],
@@ -303,7 +267,6 @@ def create_age_evolution_chart(filtered_df):
         
         return fig
     except Exception as e:
-        # Return empty figure with error message
         fig = go.Figure()
         fig.update_layout(
             title=f"Error creating chart: {str(e)}",
@@ -315,7 +278,6 @@ def create_age_evolution_chart(filtered_df):
 def create_sport_characteristics(filtered_df, selected_sport=None):
     """Create visualizations showing detailed characteristics of a single sport"""
     if filtered_df.empty or not selected_sport:
-        # Return empty figure with text if no data
         fig = go.Figure()
         fig.update_layout(
             title="Please select a sport to view its characteristics",
@@ -329,7 +291,6 @@ def create_sport_characteristics(filtered_df, selected_sport=None):
         sport_df = filtered_df[filtered_df['Sport'] == selected_sport]
         
         if len(sport_df) < 10:
-            # Not enough data for this sport
             empty_fig = go.Figure()
             empty_fig.update_layout(
                 title=f"Not enough data for {selected_sport}",
@@ -381,8 +342,7 @@ def create_sport_characteristics(filtered_df, selected_sport=None):
         total_events = sport_df['Event'].nunique()
         medal_countries = unique_medal_df['region'].nunique() if not unique_medal_df.empty else 0
         
-        # -------- PHYSICAL CHARACTERISTICS VISUALIZATION --------
-        # Create a more intuitive comparison bar chart
+       
         phys_fig = go.Figure()
         
         # Prepare data for comparison
@@ -402,7 +362,6 @@ def create_sport_characteristics(filtered_df, selected_sport=None):
             round(all_male_pct, 1)
         ]
         
-        # Percentage differences for color coding
         pct_diff = []
         for i in range(len(sport_values)):
             if all_sports_values[i] > 0:
@@ -411,7 +370,7 @@ def create_sport_characteristics(filtered_df, selected_sport=None):
             else:
                 pct_diff.append(0)
         
-        # Create a horizontal bar chart for the sport
+       
         phys_fig.add_trace(go.Bar(
             y=attributes,
             x=sport_values,
@@ -422,7 +381,7 @@ def create_sport_characteristics(filtered_df, selected_sport=None):
             textposition='auto'
         ))
         
-        # Add a bar for all sports average
+       
         phys_fig.add_trace(go.Bar(
             y=attributes,
             x=all_sports_values,
@@ -433,7 +392,7 @@ def create_sport_characteristics(filtered_df, selected_sport=None):
             textposition='auto'
         ))
         
-        # Update layout
+       
         phys_fig.update_layout(
             title=f"{selected_sport} vs All Sports - Physical Characteristics",
             xaxis_title='Value',
@@ -450,40 +409,33 @@ def create_sport_characteristics(filtered_df, selected_sport=None):
             margin=dict(l=20, r=20, t=70, b=20)
         )
         
-        # -------- MEDAL PERFORMANCE VISUALIZATION --------
         medal_fig = go.Figure()
         
         if not medals_df.empty:
-            # Count medals by type
             medal_counts = unique_medal_df['Medal'].value_counts().reset_index()
             medal_counts.columns = ['Medal', 'Count']
             
-            # Make sure all medal types are represented
             medal_types = ['Gold', 'Silver', 'Bronze']
             for medal in medal_types:
                 if medal not in medal_counts['Medal'].values:
                     medal_counts = pd.concat([medal_counts, pd.DataFrame({'Medal': [medal], 'Count': [0]})])
             
-            # Sort by medal precedence
             medal_order = {'Gold': 0, 'Silver': 1, 'Bronze': 2}
             medal_counts['Order'] = medal_counts['Medal'].map(medal_order)
             medal_counts = medal_counts.sort_values('Order')
             
-            # Define colors
             medal_colors = {
                 'Gold': '#FFD700',
                 'Silver': '#C0C0C0',
                 'Bronze': '#CD7F32'
             }
             
-            # Create medal type breakdown as a pie chart for clarity
             medal_fig = make_subplots(
                 rows=1, cols=2,
                 specs=[[{"type": "pie"}, {"type": "xy"}]],
                 subplot_titles=("Medal Type Distribution", "Historical Medal Performance")
             )
             
-            # Add pie chart of medal types
             medal_fig.add_trace(
                 go.Pie(
                     labels=medal_counts['Medal'],
@@ -497,21 +449,16 @@ def create_sport_characteristics(filtered_df, selected_sport=None):
                 row=1, col=1
             )
             
-            # Add historical trend - medals over time
-            # Group by year and medal type
             try:
                 yearly_medals = unique_medal_df.groupby(['Year', 'Medal']).size().reset_index(name='Count')
                 yearly_medals = yearly_medals.pivot(index='Year', columns='Medal', values='Count').fillna(0).reset_index()
                 
-                # Ensure all medal types are present
                 for medal in medal_types:
                     if medal not in yearly_medals.columns:
                         yearly_medals[medal] = 0
                 
-                # Sort by year
                 yearly_medals = yearly_medals.sort_values('Year')
                 
-                # Add stacked area chart for historical performance
                 for medal in medal_types:
                     if medal in yearly_medals.columns:
                         medal_fig.add_trace(
@@ -528,7 +475,6 @@ def create_sport_characteristics(filtered_df, selected_sport=None):
                         )
             except Exception as e:
                 print(f"Error creating historical medal chart: {e}")
-                # Add a blank chart with error message
                 medal_fig.add_trace(
                     go.Scatter(
                         x=[0],
@@ -539,7 +485,6 @@ def create_sport_characteristics(filtered_df, selected_sport=None):
                     row=1, col=2
                 )
             
-            # Add top countries as annotations
             if medal_countries > 0:
                 top_countries = unique_medal_df['region'].value_counts().head(5)
                 top_country_text = "<br>".join([f"{country}: {count} medals" for country, count in zip(top_countries.index, top_countries.values)])
@@ -559,7 +504,6 @@ def create_sport_characteristics(filtered_df, selected_sport=None):
                     font=dict(size=12)
                 )
             
-            # Update layout
             medal_fig.update_layout(
                 title=f"{selected_sport} - Medal Analysis (Total events: {total_events}, Countries with medals: {medal_countries})",
                 template='plotly_dark',
@@ -574,7 +518,6 @@ def create_sport_characteristics(filtered_df, selected_sport=None):
                 )
             )
             
-            # Update x-axis for historical chart
             medal_fig.update_xaxes(title_text="Olympic Year", row=1, col=2)
             medal_fig.update_yaxes(title_text="Medal Count", row=1, col=2)
             
@@ -587,7 +530,6 @@ def create_sport_characteristics(filtered_df, selected_sport=None):
         
         return phys_fig, medal_fig
     except Exception as e:
-        # Return empty figure with error message
         error_fig = go.Figure()
         error_fig.update_layout(
             title=f"Error creating charts: {str(e)}",
@@ -599,7 +541,6 @@ def create_sport_characteristics(filtered_df, selected_sport=None):
 def create_gender_participation_chart(filtered_df):
     """Create a visualization of gender participation trends"""
     if filtered_df.empty:
-        # Return empty figure with text if no data
         fig = go.Figure()
         fig.update_layout(
             title="No data available for the selected filters",
@@ -684,7 +625,6 @@ def create_gender_participation_chart(filtered_df):
         return fig
         
     except Exception as e:
-        # Return empty figure with error message
         fig = go.Figure()
         fig.update_layout(
             title=f"Error creating chart: {str(e)}",
@@ -693,7 +633,7 @@ def create_gender_participation_chart(filtered_df):
         )
         return fig
 
-# Layout definition
+
 layout = dbc.Container([
     # Hero Section
     dbc.Row([
