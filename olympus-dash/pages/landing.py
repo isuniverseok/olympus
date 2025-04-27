@@ -9,7 +9,7 @@ import pandas as pd
 
 dash.register_page(__name__, path='/', name='Home')
 
-# Modern card style with hover effects
+# Card styling
 card_style = {
     "backgroundColor": "#ffffff",
     "border": "1px solid #e0e0e0",
@@ -24,7 +24,6 @@ card_hover_style = {
     "boxShadow": "0 4px 8px rgba(0,0,0,0.1)"
 }
 
-# --- Helper function for Stat Cards ---
 def create_stat_card(title, value, icon, className=""):
     return dbc.Card([
         dbc.CardBody([
@@ -37,7 +36,7 @@ def create_stat_card(title, value, icon, className=""):
         ])
     ], className=f"stat-card {className}", style=card_style)
 
-# --- Layout ---
+# Layout
 layout = dbc.Container([
     # Hero Section
     dbc.Row([
@@ -51,27 +50,26 @@ layout = dbc.Container([
         ], width=12)
     ], className="mb-4"),
 
-    # Quick Stats Section
+    # Stats
     dbc.Row([
         dbc.Col(create_stat_card("Total Athletes", len(df['Name'].unique()), "people-fill"), width=12, md=4, className="mb-4"),
         dbc.Col(create_stat_card("Total Countries", len(df['NOC'].unique()), "globe"), width=12, md=4, className="mb-4"),
         dbc.Col(create_stat_card("Total Sports", len(df['Sport'].unique()), "trophy-fill"), width=12, md=4, className="mb-4")
     ], className="mb-5"),
 
-    # Main Content Section
+    # Main content
     dbc.Row([
         # Athlete Trend Chart
         dbc.Col([
             dbc.Card([
                 dbc.CardHeader("Athlete Participation Trends", className="text-primary"),
                 dbc.CardBody([
-                    # Graph
                     dcc.Graph(id='athlete-trend-chart', config={'displayModeBar': False})
                 ])
             ], className="chart-card animate-slide", style=card_style)
         ], width=12, lg=8, className="mb-4"),
         
-        # Dataset Summary Card
+        # Dataset Summary
         dbc.Col([
             dbc.Card([
                 dbc.CardHeader("Dataset Overview", className="text-primary"),
@@ -94,8 +92,7 @@ layout = dbc.Container([
     ])
 ], fluid=True, className="px-4 py-3")
 
-# --- Callbacks ---
-# --- Callback for the athlete trend chart ---
+# Athlete trend chart callback
 @callback(
     Output('athlete-trend-chart', 'figure'),
     Input('athlete-trend-chart', 'id')
@@ -109,21 +106,21 @@ def update_athlete_trend(_):
             yaxis={'visible': False}
         )
     
-    # Create separate dataframes for Summer and Winter Olympics
+    # Separate Summer and Winter data
     summer_df = df[df['Season'] == 'Summer']
     winter_df = df[df['Season'] == 'Winter']
     
-    # Calculate athletes per year for each season
+    # Calculate athletes per year
     summer_athletes = summer_df.drop_duplicates(subset=['Year', 'Name']).groupby('Year').size().reset_index(name='Athletes')
     summer_athletes['Season'] = 'Summer'
     
     winter_athletes = winter_df.drop_duplicates(subset=['Year', 'Name']).groupby('Year').size().reset_index(name='Athletes')
     winter_athletes['Season'] = 'Winter'
     
-    # Combine the data
+    # Combine data
     combined_df = pd.concat([summer_athletes, winter_athletes])
     
-    # Create a single figure with two trend lines
+    # Create trend lines
     fig = px.line(
         combined_df,
         x='Year',

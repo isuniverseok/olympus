@@ -5,11 +5,11 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output, State
 import os
 
-# Set environment variables to disable debug UI
+# Disable debug UI
 os.environ["DASH_DEBUG"] = "false"
 os.environ["DASH_PROPS_CHECK"] = "false"
 
-# Initialize the app with Bootstrap icons
+# Init app
 app = dash.Dash(__name__,
                 use_pages=True,
                 external_stylesheets=[
@@ -22,27 +22,22 @@ app = dash.Dash(__name__,
 app.title = "Olympus Insight"
 server = app.server
 
-# --- Navigation Items ---
-# Define the desired order of page names
+# Page order
 desired_order = [
     "Home",
     "Country Profile",
     "Country Comparison",
     "Globe View",
     "Olympic Year",
-    
     "Sport Profile",
     "Host Analysis",
-    
     "Economic Factors (HDI)",
     "More Analysis",
     "Prediction",
-    
-    
     "Acknowledgement"
 ]
 
-# Create navigation items and quick access buttons
+# Nav items and quick access buttons
 nav_items = []
 quick_access_buttons = []
 page_map = {page['name']: page for page in dash.page_registry.values() if page['module'] != 'pages.not_found_404'}
@@ -64,7 +59,6 @@ for name in desired_order:
             "Acknowledgement": "info-circle-fill"
         }.get(name, "circle-fill")
         
-        # Main navigation item
         nav_items.append(
             dbc.NavItem(
                 dbc.NavLink(
@@ -78,7 +72,6 @@ for name in desired_order:
             )
         )
         
-        # Quick access button
         quick_access_buttons.append(
             html.A(
                 html.I(className=f"bi bi-{icon_class}"),
@@ -88,10 +81,9 @@ for name in desired_order:
             )
         )
 
-# --- Sidebar Content ---
+# Sidebar
 sidebar = html.Div(
     [
-        # Sidebar Header with Logo and Title
         html.Div(
             [
                 html.Div([
@@ -104,7 +96,6 @@ sidebar = html.Div(
         ),
         html.Hr(),
         
-        # Navigation Section
         html.Div(
             [
                 dbc.Nav(
@@ -118,7 +109,6 @@ sidebar = html.Div(
             className="sidebar-nav-section"
         ),
         
-        # Footer Section in Sidebar
         html.Div(
             [
                 html.Hr(),
@@ -141,10 +131,9 @@ quick_access_panel = html.Div(
     className="quick-access-panel"
 )
 
-# --- Main Application Layout ---
+# App layout
 app.layout = html.Div(
     [
-        # Sidebar Toggle Button (updated with animation)
         html.Button(
     [
                 html.Div(className="toggle-btn-line"),
@@ -155,16 +144,11 @@ app.layout = html.Div(
             className="sidebar-toggle-btn"
         ),
 
-        # Quick Access Panel
         quick_access_panel,
-        
-        # Sidebar
         sidebar,
         
-        # Main Content Container with Header
         html.Div(
             [
-                # Page Header
                 html.Div(
                     dbc.Container(
                         [
@@ -186,7 +170,6 @@ app.layout = html.Div(
                     ),
                     className="page-header"
                 ),
-                # Page Content
                 dbc.Container(
         dash.page_container,
                     fluid=True,
@@ -200,13 +183,12 @@ app.layout = html.Div(
             className="main-content"
         ),
         
-        # Store for sidebar state
         dcc.Store(id="sidebar-state", data={"is_open": True})
     ],
     className="wrapper"
 )
 
-# Updated callback to toggle sidebar and quick access panel
+# Toggle sidebar callback
 @app.callback(
     [Output("sidebar", "className"),
      Output("page-content", "className"),
@@ -230,6 +212,5 @@ def toggle_sidebar(toggle_clicks, close_clicks, sidebar_state):
     
     return sidebar_class, content_class, quick_access_class, {"is_open": is_open}
 
-# --- Run the App ---
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=False, port=8050)

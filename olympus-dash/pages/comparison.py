@@ -7,17 +7,17 @@ import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
 from dash.exceptions import PreventUpdate
-from data_loader import df, NOC_OPTIONS_NO_ALL, get_default_value # Use NOC_OPTIONS_NO_ALL
+from data_loader import df, NOC_OPTIONS_NO_ALL, get_default_value
 
 dash.register_page(__name__, name='Country Comparison')
 
-# Use helper for default values, ensuring they are different if possible
+# Default values for dropdowns
 default_noc1 = get_default_value(NOC_OPTIONS_NO_ALL)
 default_noc2 = NOC_OPTIONS_NO_ALL[1]['value'] if len(NOC_OPTIONS_NO_ALL) > 1 else default_noc1
 
 
 layout = dbc.Container([
-    # --- Hero Section ---
+    # Hero Section
     dbc.Row([
         dbc.Col([
             html.Div([
@@ -28,7 +28,7 @@ layout = dbc.Container([
         ], width=12)
     ], className="mb-4"),
 
-    # --- Description ---
+    # Description
     dbc.Row([
         dbc.Col([
             html.P("Select two countries to compare their Olympic achievements, participation trends, and performance metrics.", 
@@ -42,11 +42,11 @@ layout = dbc.Container([
             html.Label("Select Country 1 (NOC):", className="fw-bold"),
             dcc.Dropdown(
                 id='comparison-noc1-dropdown',
-                options=NOC_OPTIONS_NO_ALL, # Use NOC options without 'All'
+                options=NOC_OPTIONS_NO_ALL,
                 value=default_noc1,
                 clearable=False,
-                optionHeight=60,  # Increased height for multi-line country names with flags
-                style={'minWidth': '300px'} # Ensure dropdown is wide enough
+                optionHeight=60,
+                style={'minWidth': '300px'}
             )
         ], width=12, md=6, lg=4, className="mb-2 mb-md-0"),
         dbc.Col([
@@ -56,13 +56,13 @@ layout = dbc.Container([
                 options=NOC_OPTIONS_NO_ALL,
                 value=default_noc2,
                 clearable=False,
-                optionHeight=60,  # Increased height for multi-line country names with flags
-                style={'minWidth': '300px'} # Ensure dropdown is wide enough
+                optionHeight=60,
+                style={'minWidth': '300px'}
             )
         ], width=12, md=6, lg=4),
     ]),
     html.Hr(),
-    # Placeholder for Comparison visuals
+    # Comparison visuals
     dbc.Spinner(html.Div(id='comparison-visuals'))
 ])
 
@@ -81,7 +81,7 @@ def update_comparison_visuals(noc1, noc2):
     if df.empty:
         return dbc.Alert("Data not loaded.", color="danger")
 
-    # Filter data for both countries
+    # Filter data
     df_noc1 = df[df['NOC'] == noc1].copy()
     df_noc2 = df[df['NOC'] == noc2].copy()
 
@@ -89,14 +89,14 @@ def update_comparison_visuals(noc1, noc2):
         missing_noc = noc1 if df_noc1.empty else noc2
         return dbc.Alert(f"No data found for {missing_noc}. Cannot perform comparison.", color="warning")
 
-    # --- Prepare Deduplicated Medal Data & Base Athlete Data --- 
+    # Prepare medal data
     medals_noc1 = df_noc1[df_noc1['Medal'] != 'None'].copy()
     medals_noc2 = df_noc2[df_noc2['Medal'] != 'None'].copy()
 
     unique_medals_noc1 = medals_noc1.drop_duplicates(subset=['Year', 'Season', 'Event', 'Medal'])
     unique_medals_noc2 = medals_noc2.drop_duplicates(subset=['Year', 'Season', 'Event', 'Medal'])
 
-    # --- Comparison 1: Overall Medal Counts --- 
+    # Overall Medal Counts
     counts1 = unique_medals_noc1['Medal'].value_counts().reindex(['Gold', 'Silver', 'Bronze'], fill_value=0)
     counts2 = unique_medals_noc2['Medal'].value_counts().reindex(['Gold', 'Silver', 'Bronze'], fill_value=0)
 
@@ -113,11 +113,10 @@ def update_comparison_visuals(noc1, noc2):
                                 template='plotly_white')
     fig_overall_medals.update_layout(legend_title_text='Country', title=None)
 
-    # --- Comparison 2: Medal Trend Head-to-Head --- 
+    # Medal Trend Head-to-Head
     trend1 = unique_medals_noc1.groupby('Year').size().reset_index(name=noc1)
     trend2 = unique_medals_noc2.groupby('Year').size().reset_index(name=noc2)
     
-    # Merge trends on Year, fill missing years with 0
     medal_trend_df = pd.merge(trend1, trend2, on='Year', how='outer').fillna(0).sort_values('Year')
 
     fig_medal_trend = px.line(medal_trend_df, x='Year', y=[noc1, noc2],
@@ -126,11 +125,8 @@ def update_comparison_visuals(noc1, noc2):
                               template='plotly_white')
     fig_medal_trend.update_layout(xaxis_title='Year', yaxis_title='Total Unique Medals Won', hovermode="x unified", title=None)
 
-    # --- NEW: Radar Chart for Performance Metrics --- 
-    # Calculate metrics for radar chart
-    # Metrics: Total medals, Gold ratio, Athlete efficiency, Summer medals, Winter medals
-    
-    # NOC1 metrics
+    # Radar Chart for Performance Metrics
+    # Calculate metrics
     total_medals1 = unique_medals_noc1.shape[0]
     gold_ratio1 = counts1['Gold'] / total_medals1 if total_medals1 > 0 else 0
     
@@ -140,7 +136,6 @@ def update_comparison_visuals(noc1, noc2):
     summer_medals1 = unique_medals_noc1[unique_medals_noc1['Season'] == 'Summer'].shape[0]
     winter_medals1 = unique_medals_noc1[unique_medals_noc1['Season'] == 'Winter'].shape[0]
     
-    # NOC2 metrics
     total_medals2 = unique_medals_noc2.shape[0]
     gold_ratio2 = counts2['Gold'] / total_medals2 if total_medals2 > 0 else 0
     
@@ -150,14 +145,13 @@ def update_comparison_visuals(noc1, noc2):
     summer_medals2 = unique_medals_noc2[unique_medals_noc2['Season'] == 'Summer'].shape[0]
     winter_medals2 = unique_medals_noc2[unique_medals_noc2['Season'] == 'Winter'].shape[0]
     
-    # Find max values to normalize metrics (to range 0-1 for radar)
+    # Normalize metrics
     max_total = max(total_medals1, total_medals2)
-    max_gold_ratio = 1  # Already ratio 0-1
+    max_gold_ratio = 1
     max_efficiency = max(athlete_efficiency1, athlete_efficiency2)
     max_summer = max(summer_medals1, summer_medals2)
     max_winter = max(winter_medals1, winter_medals2)
     
-    # Normalize to 0-1 scale, add small epsilon to avoid division by zero
     epsilon = 1e-10
     categories = ['Total Medals', 'Gold Medal Ratio', 'Medals per Athlete', 'Summer Medals', 'Winter Medals']
     
@@ -203,7 +197,7 @@ def update_comparison_visuals(noc1, noc2):
         showlegend=True,
         template='plotly_white'
     )
-    
+
     # --- NEW: Bubble Chart for Top Sports ---
     # Get medal counts by sport for each country
     sport_medals1 = unique_medals_noc1.groupby('Sport').size().reset_index(name='Medals')
