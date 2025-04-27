@@ -27,7 +27,6 @@ try:
     df_with_medals = olympic_df[olympic_df['Medal'] != 'None']
     
     # Convert height and weight to numeric, handling errors
-    olympic_df = olympic_df.copy()  # Create a copy to avoid SettingWithCopyWarning
     olympic_df['Height'] = pd.to_numeric(olympic_df['Height'], errors='coerce')
     olympic_df['Weight'] = pd.to_numeric(olympic_df['Weight'], errors='coerce')
     olympic_df['Age'] = pd.to_numeric(olympic_df['Age'], errors='coerce')
@@ -51,6 +50,13 @@ except Exception as e:
     max_year = 2016
     sports_list = []
     seasons = []
+
+# Constants for styling
+PLOTLY_TEMPLATE = "plotly_white"
+olympic_colors = ["primary", "warning", "info", "success", "danger"]
+card_style = {"backgroundColor": "#ffffff", "border": "1px solid #dee2e6"}
+card_header_style = {"backgroundColor": "#e9ecef", "fontWeight": "600", "borderBottom": "1px solid #dee2e6"}
+plot_card_body_style = {"padding": "0.5rem"}
 
 # Advanced analysis functions
 def create_medal_trend_chart(filtered_df, n_countries=10):
@@ -99,16 +105,14 @@ def create_medal_trend_chart(filtered_df, n_countries=10):
                 # Ensure all years have data points (for continuous lines)
                 year_df = pd.DataFrame({'Year': all_years})
                 complete_df = pd.merge(year_df, yearly_medals, on='Year', how='left')
-                complete_df = complete_df.copy()  # Create a copy to avoid SettingWithCopyWarning
-                complete_df['region'] = complete_df['region'].fillna(country)
-                complete_df['MedalCount'] = complete_df['MedalCount'].fillna(0)
+                complete_df['region'].fillna(country, inplace=True)
+                complete_df['MedalCount'].fillna(0, inplace=True)
                 
                 medal_data.append(complete_df)
                 
             # Combine all countries' data
             if medal_data:
                 medal_counts = pd.concat(medal_data)
-                medal_counts = medal_counts.copy()  # Create a copy to avoid SettingWithCopyWarning
                 medal_counts['Year'] = medal_counts['Year'].astype(int)
                 medal_counts['MedalCount'] = medal_counts['MedalCount'].astype(int)
                 
@@ -689,13 +693,7 @@ def create_gender_participation_chart(filtered_df):
         )
         return fig
 
-# Constants for styling
-PLOTLY_TEMPLATE = "plotly_white"
-olympic_colors = ["primary", "warning", "info", "success", "danger"]
-card_style = {"backgroundColor": "#ffffff", "border": "1px solid #dee2e6"}
-card_header_style = {"backgroundColor": "#e9ecef", "fontWeight": "600", "borderBottom": "1px solid #dee2e6"}
-plot_card_body_style = {"padding": "0.5rem"}
-
+# Layout definition
 layout = dbc.Container([
     # Hero Section
     dbc.Row([
@@ -741,12 +739,11 @@ layout = dbc.Container([
                 
                 dbc.Col([
                     html.Label("Season:", className="fw-bold small d-block mb-2"),
-                    dbc.RadioItems(
+                    dbc.Checklist(
                         id='season-toggle',
-                        options=[{"label": "All", "value": "All"}, 
-                               {"label": "Summer", "value": "Summer"}, 
-                               {"label": "Winter", "value": "Winter"}],
-                        value="All",
+                        options=[{'label': season, 'value': season} 
+                                for season in seasons],
+                        value=seasons,
                         inline=True,
                         className="mb-4"
                     ),
@@ -756,10 +753,10 @@ layout = dbc.Container([
                     html.Label("Sport:", className="fw-bold small"),
                     dcc.Dropdown(
                         id='sport-characteristics-dropdown',
-                        options=[{'label': 'All Sports', 'value': 'All'}] + 
-                               [{'label': sport, 'value': sport} for sport in sports_list],
-                        value='All',
-                        clearable=False,
+                        options=[{'label': sport, 'value': sport} 
+                                for sport in sports_list],
+                        value=None,
+                        placeholder="Select a sport for detailed analysis",
                         className="mb-4"
                     ),
                 ], width=12, lg=3),
@@ -895,13 +892,13 @@ def update_all_visualizations(n_clicks, year_range, season):
             filtered_df = filtered_df[(filtered_df['Year'] >= year_range[0]) & 
                                     (filtered_df['Year'] <= year_range[1])]
         
-        # Season filter - handle "All" case
-        if season and season != "All":
-            filtered_df = filtered_df[filtered_df['Season'] == season]
+        # Season filter - handle list of selected seasons
+        if season and len(season) > 0:
+            filtered_df = filtered_df[filtered_df['Season'].isin(season)]
         
         # Create filter summary text
         year_text = f"{year_range[0]}-{year_range[1]}" if year_range else "All years"
-        season_text = season if season else "All seasons"
+        season_text = ", ".join(season) if season and len(season) > 0 else "All seasons"
         filter_summary = f"Showing: {year_text}, {season_text}"
         
         # Generate all visualizations
@@ -941,9 +938,9 @@ def update_sport_characteristics(n_clicks, selected_sport, year_range, season):
             filtered_df = filtered_df[(filtered_df['Year'] >= year_range[0]) & 
                                     (filtered_df['Year'] <= year_range[1])]
         
-        # Season filter - handle "All" case
-        if season and season != "All":
-            filtered_df = filtered_df[filtered_df['Season'] == season]
+        # Season filter - handle list of selected seasons
+        if season and len(season) > 0:
+            filtered_df = filtered_df[filtered_df['Season'].isin(season)]
         
         # Generate characteristics charts with selected sport
         radar_fig, scatter_3d_fig = create_sport_characteristics(filtered_df, selected_sport)
