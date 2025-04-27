@@ -102,7 +102,8 @@ sidebar = html.Div(
                     nav_items,
                     vertical=True,
                     pills=True,
-                    className="sidebar-nav-items"
+                    className="sidebar-nav-items",
+                    id="sidebar-navigation-links"
                 )
             ],
             className="sidebar-nav-section"

@@ -345,20 +345,27 @@ def generate_hdi_insights(merged_df, sport=None, year=None):
 layout = dbc.Container(fluid=True, children=[
     dcc.Store(id='hdi-data-store'), # To store processed HDI data
 
-    dbc.Row([
-        dbc.Col([
-            html.H1("Economic Factors (HDI) & Olympic Performance", className="mb-4"),
-            html.P(
-                "Explore the relationship between Human Development Index (HDI) and Olympic medal performance.",
-                className="lead"
-            )
-        ])
-    ]),
-
+    # Hero Section in light grey box
+    html.Div([
+        dbc.Row([
+            dbc.Col([
+                html.Div([
+                    html.H1("Economic Factors (HDI) & Olympic Performance", 
+                            className="display-4 fw-bold text-primary"),
+                    html.P("Explore the relationship between Human Development Index (HDI) and Olympic medal performance.",
+                           className="lead")
+                ], className="text-center py-4")
+            ], width=12)
+        ], className="mb-4")
+    ], className="bg-light p-3 rounded shadow-sm mb-4"),
+    
+    # Analysis Filters Card
     dbc.Row([
         dbc.Col([
             dbc.Card([
-                dbc.CardHeader("Analysis Filters"),
+                dbc.CardHeader([
+                    html.H4("Analysis Filters", className="text-primary m-0")
+                ]),
                 dbc.CardBody([
                     dbc.Row([
                         dbc.Col([
@@ -371,7 +378,6 @@ layout = dbc.Container(fluid=True, children=[
                                 ),
                                 value="All", # Default to All
                                 clearable=False,
-                                # Removed inline style, rely on assets/economic_analysis.css
                             )
                         ], md=6),
                         dbc.Col([
@@ -384,35 +390,55 @@ layout = dbc.Container(fluid=True, children=[
                                 ),
                                 value="All", # Default to All Sports
                                 clearable=False,
-                                # Removed inline style, rely on assets/economic_analysis.css
                             )
                         ], md=6),
                     ]),
                 ])
-            ], className="mb-4")
+            ], className="chart-card animate-slide")
         ])
-    ]),
+    ], className="mb-4"),
 
+    # HDI vs. Medal Count Scatter Chart
     dbc.Row([
-        dbc.Col(dbc.Card([
-            dbc.CardHeader("HDI vs. Total Medal Count"),
-            dbc.CardBody(dcc.Graph(id="hdi-medal-scatter-chart"))
-        ]), md=12, className="mb-4")
-    ]),
+        dbc.Col([
+            dbc.Card([
+                dbc.CardHeader([
+                    html.H4("HDI vs. Total Medal Count", className="text-primary m-0")
+                ]),
+                dbc.CardBody([
+                    dcc.Graph(id="hdi-medal-scatter-chart")
+                ])
+            ], className="chart-card animate-slide")
+        ], md=12)
+    ], className="mb-4"),
 
+    # Medal Distribution Chart
     dbc.Row([
-        dbc.Col(dbc.Card([
-            dbc.CardHeader("Medal Distribution by HDI Category"),
-            dbc.CardBody(dcc.Graph(id="hdi-sport-bar-chart"))
-        ]), md=12, className="mb-4"),
-    ]),
+        dbc.Col([
+            dbc.Card([
+                dbc.CardHeader([
+                    html.H4("Medal Distribution by HDI Category", className="text-primary m-0")
+                ]),
+                dbc.CardBody([
+                    dcc.Graph(id="hdi-sport-bar-chart")
+                ])
+            ], className="chart-card animate-slide")
+        ], md=12)
+    ], className="mb-4"),
 
+    # Key Insights
     dbc.Row([
-        dbc.Col(dbc.Card([
-            dbc.CardHeader("Key Insights"),
-            dbc.CardBody(html.Div(id="hdi-insights"))
-        ]), md=12, className="mt-4")
-    ])
+        dbc.Col([
+            dbc.Card([
+                dbc.CardHeader([
+                    html.H4("Key Insights", className="text-primary m-0")
+                ]),
+                dbc.CardBody([
+                    html.Div(id="hdi-insights", className="analysis-card animate-slide")
+                ])
+            ], className="analysis-card animate-slide")
+        ], md=12)
+    ], className="mb-4")
 ])
 
 # --- Callbacks ---

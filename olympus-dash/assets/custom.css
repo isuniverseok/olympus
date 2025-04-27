@@ -228,6 +228,41 @@ footer {
     flex-direction: column;
 }
 
+/* NEW: When sidebar is collapsed, make only the icons visible but not clickable */
+.sidebar-nav:not(.active) .sidebar-nav-items {
+    pointer-events: none;
+}
+
+/* NEW: Allow click events only on the icons in the collapsed sidebar for visual appeal */
+.sidebar-nav:not(.active) .sidebar-nav-items i {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+/* NEW: Add a clickable transparent overlay that will redirect to the correct page */
+.sidebar-nav:not(.active)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1045; /* Higher than the sidebar content */
+}
+
+/* NEW: Most critical rule - completely disable the callback trigger */
+.sidebar-nav:not(.active) a, 
+.sidebar-nav:not(.active) a:hover, 
+.sidebar-nav:not(.active) a:focus, 
+.sidebar-nav:not(.active) a:active {
+    pointer-events: none !important; /* Super important to prevent any link clicks */
+}
+
+/* NEW: Add specific handler for the toggle button to ensure it still works */
+#sidebar-toggle {
+    pointer-events: auto !important;
+}
+
 .sidebar-nav.active {
     left: 0;
 }
