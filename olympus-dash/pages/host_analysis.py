@@ -48,7 +48,20 @@ def get_host_data():
     for year, (city, noc) in HOST_CITIES.items():
         # Get host year data
         host_year = df[df['Year'] == year]
-        host_medals = host_year[host_year['NOC'] == noc]['Medal'].value_counts()
+        
+        # Calculate unique medals using the same logic as in olympic_year.py
+        # Handle host year medals
+        host_year_medals = host_year[host_year['NOC'] == noc]
+        host_medals_df = host_year_medals[host_year_medals['Medal'] != 'None'].copy()
+        if not host_medals_df.empty:
+            # Deduplicate medals by event (handles team events correctly)
+            unique_host_medals = host_medals_df.drop_duplicates(
+                subset=['Year', 'Season', 'Event', 'Medal']
+            )
+            host_medals = unique_host_medals['Medal'].value_counts()
+        else:
+            host_medals = pd.Series(0, index=['Gold', 'Silver', 'Bronze'])
+        
         host_athletes = len(host_year[host_year['NOC'] == noc]['Name'].unique())
         
         # Get previous games data (if available)
@@ -57,7 +70,18 @@ def get_host_data():
         prev_athletes = None
         if prev_year:
             prev_year_data = df[df['Year'] == prev_year]
-            prev_medals = prev_year_data[prev_year_data['NOC'] == noc]['Medal'].value_counts()
+            
+            # Previous medals with same deduplication logic
+            prev_year_medals = prev_year_data[prev_year_data['NOC'] == noc]
+            prev_medals_df = prev_year_medals[prev_year_data['Medal'] != 'None'].copy()
+            if not prev_medals_df.empty:
+                unique_prev_medals = prev_medals_df.drop_duplicates(
+                    subset=['Year', 'Season', 'Event', 'Medal']
+                )
+                prev_medals = unique_prev_medals['Medal'].value_counts()
+            else:
+                prev_medals = pd.Series(0, index=['Gold', 'Silver', 'Bronze'])
+                
             prev_athletes = len(prev_year_data[prev_year_data['NOC'] == noc]['Name'].unique())
         
         # Get next games data (if available)
@@ -66,18 +90,29 @@ def get_host_data():
         next_athletes = None
         if next_year:
             next_year_data = df[df['Year'] == next_year]
-            next_medals = next_year_data[next_year_data['NOC'] == noc]['Medal'].value_counts()
+            
+            # Next medals with same deduplication logic
+            next_year_medals = next_year_data[next_year_data['NOC'] == noc]
+            next_medals_df = next_year_medals[next_year_data['Medal'] != 'None'].copy()
+            if not next_medals_df.empty:
+                unique_next_medals = next_medals_df.drop_duplicates(
+                    subset=['Year', 'Season', 'Event', 'Medal']
+                )
+                next_medals = unique_next_medals['Medal'].value_counts()
+            else:
+                next_medals = pd.Series(0, index=['Gold', 'Silver', 'Bronze'])
+                
             next_athletes = len(next_year_data[next_year_data['NOC'] == noc]['Name'].unique())
         
         host_data.append({
             'Year': year,
             'City': city,
             'NOC': noc,
-            'Host_Medals': host_medals.to_dict() if not host_medals.empty else {'Gold': 0, 'Silver': 0, 'Bronze': 0},
+            'Host_Medals': host_medals.to_dict() if isinstance(host_medals, pd.Series) and not host_medals.empty else {'Gold': 0, 'Silver': 0, 'Bronze': 0},
             'Host_Athletes': host_athletes,
-            'Prev_Medals': prev_medals.to_dict() if prev_medals is not None and not prev_medals.empty else {'Gold': 0, 'Silver': 0, 'Bronze': 0},
+            'Prev_Medals': prev_medals.to_dict() if prev_medals is not None and isinstance(prev_medals, pd.Series) and not prev_medals.empty else {'Gold': 0, 'Silver': 0, 'Bronze': 0},
             'Prev_Athletes': prev_athletes,
-            'Next_Medals': next_medals.to_dict() if next_medals is not None and not next_medals.empty else {'Gold': 0, 'Silver': 0, 'Bronze': 0},
+            'Next_Medals': next_medals.to_dict() if next_medals is not None and isinstance(next_medals, pd.Series) and not next_medals.empty else {'Gold': 0, 'Silver': 0, 'Bronze': 0},
             'Next_Athletes': next_athletes
         })
     
