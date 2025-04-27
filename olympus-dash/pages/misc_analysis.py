@@ -775,10 +775,12 @@ layout = dbc.Container([
             dbc.Row([
                 dbc.Col([
                     dcc.Graph(id='sport-heatmap')
-                ], width=12, lg=6),
+                ], width=12),
+            ], className="mb-4"),
+            dbc.Row([
                 dbc.Col([
                     dcc.Graph(id='sport-3d-scatter')
-                ], width=12, lg=6),
+                ], width=12),
             ], className="mb-4"),
         ], label="Physical Characteristics"),
         

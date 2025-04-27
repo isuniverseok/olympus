@@ -130,6 +130,60 @@ SPORT_RULES = {
     "Default": "Rules vary significantly depending on the selected sport and specific event."
 }
 
+# --- Wikipedia Links for Sports ---
+SPORT_WIKIPEDIA = {
+    "Athletics": "https://en.wikipedia.org/wiki/Athletics_(sport)",
+    "Swimming": "https://en.wikipedia.org/wiki/Swimming_(sport)",
+    "Gymnastics": "https://en.wikipedia.org/wiki/Gymnastics",
+    "Cycling": "https://en.wikipedia.org/wiki/Cycling",
+    "Archery": "https://en.wikipedia.org/wiki/Archery",
+    "Fencing": "https://en.wikipedia.org/wiki/Fencing",
+    "Rowing": "https://en.wikipedia.org/wiki/Rowing_(sport)",
+    "Sailing": "https://en.wikipedia.org/wiki/Sailing_(sport)",
+    "Shooting": "https://en.wikipedia.org/wiki/Shooting_sports",
+    "Weightlifting": "https://en.wikipedia.org/wiki/Olympic_weightlifting",
+    "Boxing": "https://en.wikipedia.org/wiki/Boxing",
+    "Wrestling": "https://en.wikipedia.org/wiki/Wrestling",
+    "Judo": "https://en.wikipedia.org/wiki/Judo",
+    "Taekwondo": "https://en.wikipedia.org/wiki/Taekwondo",
+    "Basketball": "https://en.wikipedia.org/wiki/Basketball",
+    "Football": "https://en.wikipedia.org/wiki/Association_football",
+    "Volleyball": "https://en.wikipedia.org/wiki/Volleyball",
+    "Handball": "https://en.wikipedia.org/wiki/Handball",
+    "Hockey": "https://en.wikipedia.org/wiki/Field_hockey",
+    "Ice Hockey": "https://en.wikipedia.org/wiki/Ice_hockey",
+    "Tennis": "https://en.wikipedia.org/wiki/Tennis",
+    "Table Tennis": "https://en.wikipedia.org/wiki/Table_tennis",
+    "Badminton": "https://en.wikipedia.org/wiki/Badminton",
+    "Equestrianism": "https://en.wikipedia.org/wiki/Equestrianism",
+    "Canoeing": "https://en.wikipedia.org/wiki/Canoeing",
+    "Diving": "https://en.wikipedia.org/wiki/Diving",
+    "Water Polo": "https://en.wikipedia.org/wiki/Water_polo",
+    "Art Competitions": "https://en.wikipedia.org/wiki/Art_competitions_at_the_Summer_Olympics",
+    "Skiing": "https://en.wikipedia.org/wiki/Skiing",
+    "Biathlon": "https://en.wikipedia.org/wiki/Biathlon",
+    "Bobsleigh": "https://en.wikipedia.org/wiki/Bobsleigh",
+    "Luge": "https://en.wikipedia.org/wiki/Luge",
+    "Skating": "https://en.wikipedia.org/wiki/Ice_skating",
+    "Figure Skating": "https://en.wikipedia.org/wiki/Figure_skating",
+    "Speed Skating": "https://en.wikipedia.org/wiki/Speed_skating",
+    "Short Track Speed Skating": "https://en.wikipedia.org/wiki/Short_track_speed_skating",
+    "Curling": "https://en.wikipedia.org/wiki/Curling",
+    "Snowboarding": "https://en.wikipedia.org/wiki/Snowboarding",
+    "Baseball": "https://en.wikipedia.org/wiki/Baseball",
+    "Cricket": "https://en.wikipedia.org/wiki/Cricket",
+    "Beach Volleyball": "https://en.wikipedia.org/wiki/Beach_volleyball",
+    "Freestyle Skiing": "https://en.wikipedia.org/wiki/Freestyle_skiing",
+    "Golf": "https://en.wikipedia.org/wiki/Golf",
+    "Motorboating": "https://en.wikipedia.org/wiki/Motorboat_racing",
+    "Polo": "https://en.wikipedia.org/wiki/Polo",
+    "Rugby": "https://en.wikipedia.org/wiki/Rugby_football",
+    "Ski Jumping": "https://en.wikipedia.org/wiki/Ski_jumping",
+    "Triathlon": "https://en.wikipedia.org/wiki/Triathlon",
+    "Tug Of War": "https://en.wikipedia.org/wiki/Tug_of_war",
+    "Default": "https://en.wikipedia.org/wiki/Olympic_Games"
+}
+
 # --- Constants ---
 PLOTLY_TEMPLATE = "plotly_white" # Hardcode light theme template
 dash.register_page(__name__, name='Sport Profile', path_template='/sport/<sport_name>')
@@ -173,11 +227,7 @@ def layout(sport_name=None):
             # Theme switch removed
         ], align="center", className="mb-3"),
 
-        dbc.Alert([
-            html.H5("What is this page?", className="alert-heading"),
-            html.P("Explore historical Olympic data...", className="mb-0")
-            # Use default Bootstrap info alert style
-            ], id='info-alert', color="info", className="shadow-sm mb-4 border border-info"),
+        # Alert section removed
 
         # --- Selected Sport Header Row ---
         dbc.Row([
@@ -260,17 +310,44 @@ def layout(sport_name=None):
 )
 def update_sport_visuals(selected_sport, selected_year_range, selected_gender, selected_event, selected_season, medal_country_value):
     # --- Theme Settings (Hardcoded Light) ---
-    plotly_template = "plotly_white"
     text_color_class = "text-dark"
     muted_text_class = "text-muted"
-    card_style = {"backgroundColor": "#ffffff", "border": "1px solid #dee2e6"}
-    primary_color = "primary"
-    olympic_colors = ["primary", "warning", "info", "success", "danger"]
     default_alert_color = "secondary"
-    no_data_alert_class = "text-dark"
+    primary_color = "primary" # Define primary_color
+    plotly_template = PLOTLY_TEMPLATE
+    no_data_alert_class = "bg-light text-dark"
+    default_alert = dbc.Alert("Loading data...", color=default_alert_color, className="m-3") # Define default_alert here
+    olympic_colors = ["primary", "warning", "info", "success", "danger"] # Define olympic_colors
+
+    # --- Generate Selected Sport Header ---
+    if not selected_sport:
+        selected_sport_header_content = html.H4("No Sport Selected", className=f"text-center {text_color_class}")
+    else:
+        selected_sport_header_content = html.H4(selected_sport, className=f"text-center {text_color_class}")
+
+    # --- Generate Card for Sport Details ---
+    # Get Sport Description and Rules
+    sport_desc_text = SPORT_DESCRIPTIONS.get(selected_sport, SPORT_DESCRIPTIONS.get("Default", "No description available."))
+    sport_rules_text = SPORT_RULES.get(selected_sport, SPORT_RULES.get("Default", "Rules not available."))
+    sport_wiki_link = SPORT_WIKIPEDIA.get(selected_sport, SPORT_WIKIPEDIA.get("Default", "https://en.wikipedia.org/wiki/Olympic_Games"))
+    
+    # Basic Card Style
+    card_style = {"backgroundColor": "#ffffff", "border": "1px solid #dee2e6"}
+    
+    # Generate Card
+    details_card_content = dbc.Card([
+        dbc.CardHeader(f"About {selected_sport}", className=f"fw-bold text-{olympic_colors[0]}", style={"backgroundColor": "#e9ecef", "borderBottom": "1px solid #dee2e6"}),
+        dbc.CardBody([
+            html.P(sport_desc_text, className=f"card-text mb-4 {text_color_class}"),
+            html.Hr(),
+            html.P([
+                "Learn more about this sport on ",
+                html.A("Wikipedia", href=sport_wiki_link, target="_blank", className="text-primary")
+            ], className=f"card-text {text_color_class} mt-3")
+        ], className=text_color_class)
+    ], style=card_style, className="shadow-sm")
 
     # --- Initializations ---
-    default_alert = dbc.Alert("Select filters to view data", color=default_alert_color, className="m-3")
     key_metrics_content = dbc.ListGroup([
         dbc.ListGroupItem(html.Div([html.I(className="bi bi-filter me-2"), "Filters applied: None"], className="d-flex align-items-center small"))
     ], flush=True, className="border-0") # Initial empty state
@@ -283,16 +360,12 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
     event_options = [{'label': DEFAULT_EVENT_LABEL, 'value': DEFAULT_EVENT_LABEL}]
     event_value = DEFAULT_EVENT_LABEL
     event_disabled = True
-    details_card_content = html.Div()
-    selected_sport_header_content = None
     main_icon_emoji = SPORT_ICONS["Default"]
     medal_country_options = [{'label': DEFAULT_COUNTRY_LABEL, 'value': DEFAULT_COUNTRY_LABEL}]
 
     # --- Process Selected Sport ---
     if selected_sport:
          main_icon_emoji = SPORT_ICONS.get(selected_sport, SPORT_ICONS["Default"])
-         sport_desc_text = SPORT_DESCRIPTIONS.get(selected_sport, "")
-         sport_rules_text = SPORT_RULES.get(selected_sport, "")
          selected_sport_header_content = html.Div([
              html.Span(main_icon_emoji, style={'fontSize': '3rem', 'marginRight': '15px', "verticalAlign": "middle"}),
              html.H4(selected_sport, className=f"text-{primary_color} d-inline-block align-middle")
@@ -302,8 +375,11 @@ def update_sport_visuals(selected_sport, selected_year_range, selected_gender, s
              dbc.CardHeader(f"About {selected_sport}", className=f"fw-bold text-{olympic_colors[0]}", style={"backgroundColor": "#e9ecef", "borderBottom": "1px solid #dee2e6"}),
              dbc.CardBody([
                  html.P(sport_desc_text, className=f"card-text mb-4 {text_color_class}"),
-                 html.H6("Rules Overview", className=f"text-{olympic_colors[1]}"),
-                 html.P(sport_rules_text, className=f"card-text small fst-italic {muted_text_class}")
+                 html.Hr(),
+                 html.P([
+                     "Learn more about this sport on ",
+                     html.A("Wikipedia", href=sport_wiki_link, target="_blank", className="text-primary")
+                 ], className=f"card-text {text_color_class} mt-3")
              ], className=text_color_class)
          ], style=card_style, className="shadow-sm")
 
