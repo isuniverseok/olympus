@@ -91,102 +91,71 @@ app.index_string = '''
             /* Enhanced sidebar styling */
             .sidebar-nav {
                 width: 260px !important;
-                transition: all 0.3s ease;
+                transition: none; /* Remove transition as it's always open */
+                position: fixed; /* Keep sidebar fixed */
+                top: 0;
+                left: 0;
+                height: 100vh; /* Full height */
+                z-index: 1030; /* Ensure it's above content potentially */
+                /* Add background/color if needed, assuming theme provides it */
             }
-            
-            /* Icons-only mode (collapsed) */
-            .sidebar-nav.collapsed {
-                width: 70px !important;
-            }
-            
-            .sidebar-nav.collapsed .sidebar-brand span,
-            .sidebar-nav.collapsed .nav-text,
-            .sidebar-nav.collapsed .sidebar-footer span {
-                display: none;
-            }
-            
-            /* Logo styling and alignment */
+
+            /* Remove all rules related to .collapsed */
+
+            /* Logo/Brand styling */
             .sidebar-brand {
                 padding: 0.5rem 1rem;
                 display: flex;
                 align-items: center;
-                justify-content: center;
+                /* Keep justify-content: center or adjust as needed */
+                justify-content: center; 
             }
-            
-            .sidebar-nav.collapsed .sidebar-brand {
-                justify-content: center;
-                padding: 0.5rem 0;
+
+            /* Nav Link Styling */
+            .nav-link {
+                 padding: 0.5rem 1rem; /* Ensure padding is for expanded state */
+                 display: flex;
+                 align-items: center;
             }
-            
-            /* Center the icons in collapsed mode */
-            .sidebar-nav.collapsed .nav-link {
-                padding: 10px 0;
-                display: flex;
-                justify-content: center;
-                align-items: center;
+
+            .nav-link i {
+                font-size: 1rem; /* Icon size for expanded state */
+                margin-right: 0.5rem !important;
             }
-            
-            .sidebar-nav.collapsed .nav-link i {
-                font-size: 1.5rem;
-                margin: 0 !important;
+
+            .nav-text {
+                 display: inline-block !important; /* Ensure text is always visible */
             }
-            
-            /* Consistent padding for all nav items */
+
+            /* Consistent padding for nav items */
             .sidebar-nav-items {
                 padding-left: 0.5rem;
                 padding-right: 0.5rem;
             }
-            
-            .sidebar-nav.collapsed .sidebar-nav-items {
-                padding-left: 0;
-                padding-right: 0;
+
+            /* REMOVE HOVER EFFECT RULES */
+
+            /* Adjust main content */
+            .main-content {
+                margin-left: 260px; /* Always apply margin for expanded sidebar */
+                transition: none; /* Remove transition */
             }
-            
-            .sidebar-nav.collapsed:hover {
-                width: 260px !important;
-            }
-            
-            .sidebar-nav.collapsed:hover .sidebar-brand span,
-            .sidebar-nav.collapsed:hover .nav-text,
-            .sidebar-nav.collapsed:hover .sidebar-footer span {
-                display: inline-block;
-            }
-            
-            /* Reset icon styling when expanded */
-            .sidebar-nav.collapsed:hover .nav-link {
-                padding: 0.5rem 1rem;
-                justify-content: flex-start;
-            }
-            
-            .sidebar-nav.collapsed:hover .nav-link i {
-                font-size: 1rem;
-                margin-right: 0.5rem !important;
-            }
-            
-            .sidebar-nav.collapsed:hover .sidebar-nav-items {
-                padding-left: 0.5rem;
-                padding-right: 0.5rem;
-            }
-            
-            /* Adjust main content accordingly */
-            .main-content.shifted {
-                margin-left: 260px;
-                transition: all 0.3s ease;
-            }
-            
-            .main-content.collapsed {
-                margin-left: 70px;
-                transition: all 0.3s ease;
-            }
-            
+
             /* Mobile responsiveness */
             @media (max-width: 768px) {
-                .sidebar-nav, .sidebar-nav.collapsed:hover {
-                    width: 260px !important;
+                .sidebar-nav {
+                    /* Decide mobile behavior: hide completely or keep open? */
+                    /* Option 1: Hide sidebar on mobile */
+                     /* left: -260px; */ 
+                     /* Option 2: Keep it open (like desktop) */
+                     width: 260px !important; 
+                     left: 0;
                 }
-                .main-content.shifted, .main-content.collapsed {
-                    margin-left: 0;
+                .main-content {
+                    /* Adjust margin if sidebar is hidden on mobile */
+                     margin-left: 0; /* No margin if sidebar is hidden/overlay */
                 }
+                /* Add a button to toggle sidebar visibility on mobile if hidden */
             }
         </style>
     </head>
@@ -211,7 +180,8 @@ sidebar = html.Div(
                     #html.Img(src="assets/logo.png", height="60px", className="me-2"), # Logo removed
                     html.Span("Olympus Insight", className="ms-2")
                 ], className="sidebar-brand"),
-                html.I(className="bi bi-x-lg", id="close-sidebar-btn"),
+                # Remove Close Button:
+                # html.I(className="bi bi-x-lg", id="close-sidebar-btn"), 
             ],
             className="sidebar-header"
         ),
@@ -243,34 +213,22 @@ sidebar = html.Div(
         )
     ],
     id="sidebar",
-    className="sidebar-nav"
+    className="sidebar-nav" # Ensure no 'collapsed' or 'active' class is set here initially
 )
 
-# Quick Access Panel
-quick_access_panel = html.Div(
-    quick_access_buttons,
-    id="quick-access-panel",
-    className="quick-access-panel"
-)
+# Remove Quick Access Panel if not needed alongside permanent sidebar
+# quick_access_panel = html.Div(...)
 
 # --- Main Application Layout ---
 app.layout = html.Div(
     [
-        # Sidebar Toggle Button
-        html.Button(
-            [
-                html.Div(className="toggle-btn-line"),
-                html.Div(className="toggle-btn-line"),
-                html.Div(className="toggle-btn-line")
-            ],
-            id="sidebar-toggle",
-            className="sidebar-toggle-btn"
-        ),
+        # Remove Sidebar Toggle Button:
+        # html.Button([...], id="sidebar-toggle", className="sidebar-toggle-btn"),
         
-        # Quick Access Panel
-        quick_access_panel,
+        # Remove Quick Access Panel from layout if removed above
+        # quick_access_panel,
         
-        # Sidebar
+        # Sidebar (always present)
         sidebar,
         
         # Main Content Container with Header
@@ -306,77 +264,26 @@ app.layout = html.Div(
                     fluid=True,
                     className="content-container",
                     style={
-                        "transition": "margin-left 0.3s ease-in-out"
+                        # Remove transition here too if needed, though CSS handles margin
                     }
                 )
             ],
             id="page-content",
-            className="main-content"
+            className="main-content" # Class is now static, margin handled by CSS
         ),
         
-        # Store for sidebar state
-        dcc.Store(id="sidebar-state", data={"is_open": True, "is_collapsed": False})
+        # Remove Store for sidebar state:
+        # dcc.Store(id="sidebar-state", data={...})
     ],
     className="wrapper"
 )
 
-# Updated callback to toggle sidebar and quick access panel
-@app.callback(
-    [Output("sidebar", "className"),
-     Output("page-content", "className"),
-     Output("quick-access-panel", "className"),
-     Output("sidebar-state", "data")],
-    [Input("sidebar-toggle", "n_clicks"),
-     Input("close-sidebar-btn", "n_clicks")],
-    [State("sidebar-state", "data")]
-)
-def toggle_sidebar(toggle_clicks, close_clicks, sidebar_state):
-    ctx = dash.callback_context
-    if not ctx.triggered:
-        is_open = sidebar_state.get("is_open", True)
-        is_collapsed = sidebar_state.get("is_collapsed", False)
-    else:
-        button_id = ctx.triggered[0]["prop_id"].split(".")[0]
-        if button_id == "sidebar-toggle":
-            # Toggle between collapsed and expanded states
-            is_open = True
-            is_collapsed = not sidebar_state.get("is_collapsed", False)
-        else:
-            # Close sidebar completely
-            is_open = False
-            is_collapsed = sidebar_state.get("is_collapsed", False)
-    
-    sidebar_class = "sidebar-nav active" if is_open else "sidebar-nav"
-    sidebar_class += " collapsed" if is_collapsed and is_open else ""
-    
-    content_class = "main-content shifted" if is_open and not is_collapsed else "main-content"
-    content_class = "main-content collapsed" if is_open and is_collapsed else content_class
-    
-    quick_access_class = "quick-access-panel" if not is_open else "quick-access-panel hidden"
-    
-    return sidebar_class, content_class, quick_access_class, {"is_open": is_open, "is_collapsed": is_collapsed}
+# Remove the toggle_sidebar callback entirely
 
-# Load the page with sidebar collapsed on page load (after initial render)
-app.clientside_callback(
-    """
-    function(trigger) {
-        if (trigger) {
-            // Delay a bit to ensure everything is rendered
-            setTimeout(function() {
-                // Simulate click on the sidebar toggle to collapse it on first load
-                document.getElementById('sidebar-toggle').click();
-            }, 500);
-        }
-        return '';
-    }
-    """,
-    Output('page-content', 'className', allow_duplicate=True),
-    Input('page-load-trigger', 'children'),
-    prevent_initial_call=True
-)
+# Remove the clientside callback for initial collapse entirely
 
-# Create a hidden div to trigger the page load callback
-app.layout.children.append(html.Div(id='page-load-trigger', style={'display': 'none'}, children='loaded'))
+# Remove the page-load-trigger div
+# app.layout.children.append(html.Div(id='page-load-trigger', ...))
 
 # --- Run the App ---
 if __name__ == '__main__':

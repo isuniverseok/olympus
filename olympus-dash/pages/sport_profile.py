@@ -210,8 +210,8 @@ def layout(sport_name=None):
 
     return dbc.Container(id='sport-profile-container', className=container_class, fluid=True, children=[
         # --- Hero Section ---
-        dbc.Row([
-            dbc.Col([
+     dbc.Row([
+        dbc.Col([
                 html.Div([
                     html.H1("Sport Performance Profile", className="display-4 text-primary mb-4"),
                     html.P("Analyze detailed statistics, trends, and notable achievements for Olympic sports.", 
