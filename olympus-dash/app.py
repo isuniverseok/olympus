@@ -146,7 +146,7 @@ app.layout = html.Div(
     [
         # Sidebar Toggle Button (updated with animation)
         html.Button(
-            [
+    [
                 html.Div(className="toggle-btn-line"),
                 html.Div(className="toggle-btn-line"),
                 html.Div(className="toggle-btn-line")
@@ -154,7 +154,7 @@ app.layout = html.Div(
             id="sidebar-toggle",
             className="sidebar-toggle-btn"
         ),
-        
+
         # Quick Access Panel
         quick_access_panel,
         
@@ -172,7 +172,7 @@ app.layout = html.Div(
                                 [
                                     html.Div(
                                         [
-                                            html.I(className="bi bi-bar-chart-fill"),
+                                            html.Img(src="assets/logo.png", height=70, className="me-2"),
                                             html.Span("Olympus Insights", className="ms-3")
                                         ],
                                         className="header-brand"
@@ -188,7 +188,7 @@ app.layout = html.Div(
                 ),
                 # Page Content
                 dbc.Container(
-                    dash.page_container,
+        dash.page_container,
                     fluid=True,
                     className="content-container",
                     style={
