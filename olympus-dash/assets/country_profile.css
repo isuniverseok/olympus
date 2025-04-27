@@ -445,4 +445,21 @@ input[type="number"]:focus {
     backface-visibility: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-} 
+}
+
+/* Fix for dropdowns appearing behind other elements */
+/* Target the specific dropdowns on the economic analysis page */
+#hdi-year-dropdown,
+#hdi-sport-dropdown {
+    position: relative; /* Establish stacking context */
+    z-index: 10;      /* Give the dropdown wrapper a base stacking order */
+}
+
+/* Target the menu list itself which opens */
+#hdi-year-dropdown .Select-menu-outer,
+#hdi-sport-dropdown .Select-menu-outer {
+    z-index: 1050; /* Needs to be higher than elements below it (Bootstrap's default modal z-index) */
+}
+
+/* You might need to adjust the z-index value (1050) depending 
+   on the z-index of the chart component or other overlapping elements. */ 
